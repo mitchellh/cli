@@ -2,14 +2,31 @@ package cli
 
 import (
 	"io"
+	"os"
 	"sync"
 )
 
 // CLI contains the state necessary to run subcommands and parse the
 // command line arguments.
 type CLI struct {
-	Args       []string
-	Commands   map[string]CommandFactory
+	// Args is the list of command-line arguments received excluding
+	// the name of the app. For example, if the command "./cli foo bar"
+	// was invoked, then Args should be []string{"foo", "bar"}.
+	Args []string
+
+	// Commands is a mapping of subcommand names to a factory function
+	// for creating that Command implementation.
+	Commands map[string]CommandFactory
+
+	// HelpFunc and HelpWriter are used to output help information, if
+	// requested.
+	//
+	// HelpFunc is the function called to generate the generic help
+	// text that is shown if help must be shown for the CLI that doesn't
+	// pertain to a specific command.
+	//
+	// HelpWriter is the Writer where the help text is outputted to. If
+	// not specified, it will default to Stderr.
 	HelpFunc   HelpFunc
 	HelpWriter io.Writer
 
@@ -66,6 +83,10 @@ func (c *CLI) SubcommandArgs() []string {
 }
 
 func (c *CLI) init() {
+	if c.HelpWriter == nil {
+		c.HelpWriter = os.Stderr
+	}
+
 	c.processArgs()
 }
 
