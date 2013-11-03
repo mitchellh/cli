@@ -10,6 +10,7 @@ import (
 type CLI struct {
 	Args       []string
 	Commands   map[string]CommandFactory
+	HelpFunc   HelpFunc
 	HelpWriter io.Writer
 
 	once           sync.Once
@@ -31,8 +32,7 @@ func (c *CLI) Run() (int, error) {
 	// implementation. If the command is invalid or blank, it is an error.
 	commandFunc, ok := c.Commands[c.Subcommand()]
 	if !ok || c.Subcommand() == "" {
-		// TODO(mitchellh: printHelp
-		//c.printHelp()
+		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands)))
 		return 1, nil
 	}
 
@@ -64,45 +64,6 @@ func (c *CLI) SubcommandArgs() []string {
 	c.once.Do(c.init)
 	return c.subcommandArgs
 }
-
-/*
-func (c *CLI) printHelp() {
-	c.Ui.Error("usage: serf [--version] [--help] <command> [<args>]\n")
-	c.Ui.Error("Available commands are:")
-
-	// Get the list of keys so we can sort them, and also get the maximum
-	// key length so they can be aligned properly.
-	keys := make([]string, 0, len(c.Commands))
-	maxKeyLen := 0
-	for key, _ := range c.Commands {
-		if len(key) > maxKeyLen {
-			maxKeyLen = len(key)
-		}
-
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	for _, key := range keys {
-		commandFunc, ok := c.Commands[key]
-		if !ok {
-			// This should never happen since we JUST built the list of
-			// keys.
-			panic("command not found: " + key)
-		}
-
-		command, err := commandFunc()
-		if err != nil {
-			log.Printf("[ERR] cli: Command '%s' failed to load: %s",
-				key, err)
-			continue
-		}
-
-		key = fmt.Sprintf("%s%s", key, strings.Repeat(" ", maxKeyLen-len(key)))
-		c.Ui.Error(fmt.Sprintf("    %s    %s", key, command.Synopsis()))
-	}
-}
-*/
 
 func (c *CLI) init() {
 	c.processArgs()

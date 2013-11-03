@@ -65,8 +65,15 @@ func TestCLIRun_printHelp(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
+		buf := new(bytes.Buffer)
+		helpText := "foo"
+
 		cli := &CLI{
 			Args: testCase,
+			HelpFunc: func(map[string]CommandFactory) string {
+				return helpText
+			},
+			HelpWriter: buf,
 		}
 
 		code, err := cli.Run()
@@ -80,7 +87,9 @@ func TestCLIRun_printHelp(t *testing.T) {
 			continue
 		}
 
-		// TODO(mitchellh): test help is outputted
+		if buf.String() != helpText {
+			t.Errorf("Args: %#v. Text: %v", testCase, buf.String())
+		}
 	}
 }
 
