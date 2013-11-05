@@ -30,7 +30,8 @@ type Ui interface {
 }
 
 // BasicUi is an implementation of Ui that just outputs to the given
-// writer.
+// writer. This UI is not threadsafe by default, but you can wrap it
+// in a ConcurrentUi to make it safe.
 type BasicUi struct {
 	Reader io.Reader
 	Writer io.Writer
