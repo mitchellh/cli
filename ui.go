@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io"
-	"log"
 )
 
 // Ui is an interface for interacting with the terminal, or "interface"
