@@ -2,11 +2,39 @@ package cli
 
 import (
 	"bytes"
+	"io"
 	"testing"
 )
 
 func TestBasicUi_implements(t *testing.T) {
 	var _ Ui = new(BasicUi)
+}
+
+func TestBasicUi_Ask(t *testing.T) {
+	in_r, in_w := io.Pipe()
+	defer in_r.Close()
+	defer in_w.Close()
+
+	writer := new(bytes.Buffer)
+	ui := &BasicUi{
+		Reader: in_r,
+		Writer: writer,
+	}
+
+	go in_w.Write([]byte("foo\nbar\n"))
+
+	result, err := ui.Ask("Name?")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if writer.String() != "Name? " {
+		t.Fatalf("bad: %#v", writer.String())
+	}
+
+	if result != "foo" {
+		t.Fatalf("bad: %#v", result)
+	}
 }
 
 func TestBasicUi_Error(t *testing.T) {
@@ -30,11 +58,7 @@ func TestBasicUi_Output(t *testing.T) {
 }
 
 func TestPrefixedUi_implements(t *testing.T) {
-	var raw interface{}
-	raw = &PrefixedUi{}
-	if _, ok := raw.(Ui); !ok {
-		t.Fatalf("should be a Ui")
-	}
+	var _ Ui = new(PrefixedUi)
 }
 
 func TestPrefixedUiError(t *testing.T) {

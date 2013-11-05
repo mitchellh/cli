@@ -9,6 +9,10 @@ import (
 // of a CLI. This abstraction doesn't have to be used, but helps provide
 // a simple, layerable way to manage user interactions.
 type Ui interface {
+	// Ask asks the user for input using the given query. The response is
+	// returned as the given string, or an error.
+	Ask(string) (string, error)
+
 	// Output is called for normal standard output.
 	Output(string)
 
@@ -25,7 +29,18 @@ type Ui interface {
 // BasicUi is an implementation of Ui that just outputs to the given
 // writer.
 type BasicUi struct {
+	Reader io.Reader
 	Writer io.Writer
+}
+
+func (u *BasicUi) Ask(query string) (string, error) {
+	if _, err := fmt.Fprint(u.Writer, query+" "); err != nil {
+		return "", err
+	}
+
+	var line string
+	_, err := fmt.Fscanln(u.Reader, &line)
+	return line, err
 }
 
 func (u *BasicUi) Error(message string) {
@@ -44,10 +59,19 @@ func (u *BasicUi) Output(message string) {
 
 // PrefixedUi is an implementation of Ui that prefixes messages.
 type PrefixedUi struct {
+	AskPrefix    string
 	OutputPrefix string
 	InfoPrefix   string
 	ErrorPrefix  string
 	Ui           Ui
+}
+
+func (u *PrefixedUi) Ask(query string) (string, error) {
+	if query != "" {
+		query = fmt.Sprintf("%s%s", u.AskPrefix, query)
+	}
+
+	return u.Ui.Ask(query)
 }
 
 func (u *PrefixedUi) Error(message string) {
