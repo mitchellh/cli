@@ -10,6 +10,16 @@ type UiColor struct {
 	Bold bool
 }
 
+// A list of colors that are useful. These are all non-bolded by default.
+var (
+	UiColorRed     UiColor = UiColor{31, false}
+	UiColorGreen           = UiColor{32, false}
+	UiColorYellow          = UiColor{33, false}
+	UiColorBlue            = UiColor{34, false}
+	UiColorMagenta         = UiColor{35, false}
+	UiColorCyan            = UiColor{36, false}
+)
+
 // ColoredUi is a Ui implementation that colors its output according
 // to the given color schemes for the given type of output.
 type ColoredUi struct {
