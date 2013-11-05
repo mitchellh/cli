@@ -13,5 +13,9 @@ cli is the library that powers the CLI for
 
 * Automatic help flag recognition of `-h`, `--help`, etc.
 
+* Helpers for interacting with the terminal, such as outputting information,
+  asking for input, etc. These are optional, you can always interact with the
+  terminal however you choose.
+
 * Use of Go interfaces/types makes augmenting various parts of the library a
   piece of cake.
