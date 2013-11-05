@@ -45,6 +45,8 @@ func (c *CLI) IsHelp() bool {
 
 // Run runs the actual CLI based on the arguments given.
 func (c *CLI) Run() (int, error) {
+	c.once.Do(c.init)
+
 	// Attempt to get the factory function for creating the command
 	// implementation. If the command is invalid or blank, it is an error.
 	commandFunc, ok := c.Commands[c.Subcommand()]
@@ -83,6 +85,10 @@ func (c *CLI) SubcommandArgs() []string {
 }
 
 func (c *CLI) init() {
+	if c.HelpFunc == nil {
+		c.HelpFunc = BasicHelpFunc("app")
+	}
+
 	if c.HelpWriter == nil {
 		c.HelpWriter = os.Stderr
 	}
