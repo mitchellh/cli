@@ -51,7 +51,7 @@ func (c *CLI) Run() (int, error) {
 	// implementation. If the command is invalid or blank, it is an error.
 	commandFunc, ok := c.Commands[c.Subcommand()]
 	if !ok || c.Subcommand() == "" {
-		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands)))
+		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
 		return 1, nil
 	}
 
@@ -62,7 +62,7 @@ func (c *CLI) Run() (int, error) {
 
 	// If we've been instructed to just print the help, then print it
 	if c.IsHelp() {
-		c.HelpWriter.Write([]byte(command.Help()))
+		c.HelpWriter.Write([]byte(command.Help() + "\n"))
 		return 1, nil
 	}
 

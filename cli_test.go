@@ -87,7 +87,7 @@ func TestCLIRun_printHelp(t *testing.T) {
 			continue
 		}
 
-		if buf.String() != helpText {
+		if buf.String() != (helpText + "\n") {
 			t.Errorf("Args: %#v. Text: %v", testCase, buf.String())
 		}
 	}
@@ -125,7 +125,7 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
-		if buf.String() != command.HelpText {
+		if buf.String() != (command.HelpText + "\n") {
 			t.Fatalf("bad: %#v", buf.String())
 		}
 	}
