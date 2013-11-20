@@ -51,5 +51,5 @@ func (u *ColoredUi) colorize(message string, color UiColor) string {
 		attr = 1
 	}
 
-	return fmt.Sprintf("\033[%d;%d;40m%s\033[0m", attr, color.Code, message)
+	return fmt.Sprintf("\033[%d;%dm%s\033[0m", attr, color.Code, message)
 }
