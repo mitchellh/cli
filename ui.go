@@ -33,8 +33,9 @@ type Ui interface {
 // writer. This UI is not threadsafe by default, but you can wrap it
 // in a ConcurrentUi to make it safe.
 type BasicUi struct {
-	Reader io.Reader
-	Writer io.Writer
+	Reader      io.Reader
+	Writer      io.Writer
+	ErrorWriter io.Writer
 }
 
 func (u *BasicUi) Ask(query string) (string, error) {
@@ -76,8 +77,13 @@ func (u *BasicUi) Ask(query string) (string, error) {
 }
 
 func (u *BasicUi) Error(message string) {
-	fmt.Fprint(u.Writer, message)
-	fmt.Fprint(u.Writer, "\n")
+	w := u.Writer
+	if u.ErrorWriter != nil {
+		w = u.ErrorWriter
+	}
+
+	fmt.Fprint(w, message)
+	fmt.Fprint(w, "\n")
 }
 
 func (u *BasicUi) Info(message string) {

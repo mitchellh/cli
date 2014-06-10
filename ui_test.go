@@ -47,6 +47,17 @@ func TestBasicUi_Error(t *testing.T) {
 	}
 }
 
+func TestBasicUi_Error_ErrorWriter(t *testing.T) {
+	writer := new(bytes.Buffer)
+	ewriter := new(bytes.Buffer)
+	ui := &BasicUi{Writer: writer, ErrorWriter: ewriter}
+	ui.Error("HELLO")
+
+	if ewriter.String() != "HELLO\n" {
+		t.Fatalf("bad: %s", ewriter.String())
+	}
+}
+
 func TestBasicUi_Output(t *testing.T) {
 	writer := new(bytes.Buffer)
 	ui := &BasicUi{Writer: writer}
