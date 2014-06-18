@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 )
 
 // Ui is an interface for interacting with the terminal, or "interface"
@@ -53,13 +55,14 @@ func (u *BasicUi) Ask(query string) (string, error) {
 	errCh := make(chan error, 1)
 	lineCh := make(chan string, 1)
 	go func() {
-		var line string
-		if _, err := fmt.Fscanln(u.Reader, &line); err != nil {
+		r := bufio.NewReader(u.Reader)
+		line, err := r.ReadString('\n')
+		if err != nil {
 			errCh <- err
 			return
 		}
 
-		lineCh <- line
+		lineCh <- strings.TrimRight(line, "\r\n")
 	}()
 
 	select {
