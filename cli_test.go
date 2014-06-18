@@ -28,6 +28,28 @@ func TestCLIIsHelp(t *testing.T) {
 	}
 }
 
+func TestCLIIsVersion(t *testing.T) {
+	testCases := []struct {
+		args      []string
+		isVersion bool
+	}{
+		{[]string{"foo", "-v"}, true},
+		{[]string{"foo", "--version"}, true},
+		{[]string{"foo", "-v", "bar"}, true},
+		{[]string{"foo", "bar"}, false},
+		{[]string{"-h", "bar"}, false},
+	}
+
+	for _, testCase := range testCases {
+		cli := &CLI{Args: testCase.args}
+		result := cli.IsVersion()
+
+		if result != testCase.isVersion {
+			t.Errorf("Expected '%#v'. Args: %#v", testCase.isVersion, testCase.args)
+		}
+	}
+}
+
 func TestCLIRun(t *testing.T) {
 	command := new(MockCommand)
 	cli := &CLI{

@@ -18,6 +18,12 @@ type CLI struct {
 	// for creating that Command implementation.
 	Commands map[string]CommandFactory
 
+	// Name defines the name of the CLI.
+	Name string
+
+	// Version of the CLI.
+	Version string
+
 	// HelpFunc and HelpWriter are used to output help information, if
 	// requested.
 	//
@@ -34,6 +40,18 @@ type CLI struct {
 	isHelp         bool
 	subcommand     string
 	subcommandArgs []string
+
+	isVersion bool
+}
+
+// NewClI returns a new CLI instance with sensible defaults.
+func NewCLI(app, version string) *CLI {
+	return &CLI{
+		Name:     app,
+		Version:  version,
+		HelpFunc: BasicHelpFunc(app),
+	}
+
 }
 
 // IsHelp returns whether or not the help flag is present within the
@@ -43,9 +61,22 @@ func (c *CLI) IsHelp() bool {
 	return c.isHelp
 }
 
+// IsVersion returns whether or not the version flag is present within the
+// arguments.
+func (c *CLI) IsVersion() bool {
+	c.once.Do(c.init)
+	return c.isVersion
+}
+
 // Run runs the actual CLI based on the arguments given.
 func (c *CLI) Run() (int, error) {
 	c.once.Do(c.init)
+
+	// Just show the version and exit if instructed.
+	if c.IsVersion() {
+		c.HelpWriter.Write([]byte(c.Version + "\n"))
+		return 1, nil
+	}
 
 	// Attempt to get the factory function for creating the command
 	// implementation. If the command is invalid or blank, it is an error.
@@ -87,6 +118,10 @@ func (c *CLI) SubcommandArgs() []string {
 func (c *CLI) init() {
 	if c.HelpFunc == nil {
 		c.HelpFunc = BasicHelpFunc("app")
+
+		if c.Name != "" {
+			c.HelpFunc = BasicHelpFunc(c.Name)
+		}
 	}
 
 	if c.HelpWriter == nil {
@@ -101,6 +136,12 @@ func (c *CLI) processArgs() {
 		// If the arg is a help flag, then we saw that, but don't save it.
 		if arg == "-h" || arg == "--help" {
 			c.isHelp = true
+			continue
+		}
+
+		// Also lookup for version flag
+		if arg == "-v" || arg == "--version" {
+			c.isVersion = true
 			continue
 		}
 
