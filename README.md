@@ -13,6 +13,8 @@ cli is the library that powers the CLI for
 
 * Automatic help flag recognition of `-h`, `--help`, etc.
 
+* Automatic version flag recognition of `-v`, `--version`.
+
 * Helpers for interacting with the terminal, such as outputting information,
   asking for input, etc. These are optional, you can always interact with the
   terminal however you choose.
