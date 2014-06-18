@@ -21,7 +21,7 @@ func TestBasicUi_Ask(t *testing.T) {
 		Writer: writer,
 	}
 
-	go in_w.Write([]byte("foo\nbar\n"))
+	go in_w.Write([]byte("foo bar\nbaz\n"))
 
 	result, err := ui.Ask("Name?")
 	if err != nil {
@@ -32,7 +32,7 @@ func TestBasicUi_Ask(t *testing.T) {
 		t.Fatalf("bad: %#v", writer.String())
 	}
 
-	if result != "foo" {
+	if result != "foo bar" {
 		t.Fatalf("bad: %#v", result)
 	}
 }
