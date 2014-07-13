@@ -12,6 +12,7 @@ func TestCLIIsHelp(t *testing.T) {
 		isHelp bool
 	}{
 		{[]string{"foo", "-h"}, true},
+		{[]string{"foo", "-help"}, true},
 		{[]string{"foo", "--help"}, true},
 		{[]string{"foo", "-h", "bar"}, true},
 		{[]string{"foo", "bar"}, false},
@@ -34,6 +35,7 @@ func TestCLIIsVersion(t *testing.T) {
 		isVersion bool
 	}{
 		{[]string{"foo", "-v"}, true},
+		{[]string{"foo", "-version"}, true},
 		{[]string{"foo", "--version"}, true},
 		{[]string{"foo", "-v", "bar"}, true},
 		{[]string{"foo", "bar"}, false},
