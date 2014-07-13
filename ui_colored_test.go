@@ -8,6 +8,19 @@ func TestColoredUi_impl(t *testing.T) {
 	var _ Ui = new(ColoredUi)
 }
 
+func TestColoredUi_noColor(t *testing.T) {
+	mock := new(MockUi)
+	ui := &ColoredUi{
+		ErrorColor: UiColorNone,
+		Ui:         mock,
+	}
+	ui.Error("foo")
+
+	if mock.ErrorWriter.String() != "foo\n" {
+		t.Fatalf("bad: %#v", mock.ErrorWriter.String())
+	}
+}
+
 func TestColoredUi_Error(t *testing.T) {
 	mock := new(MockUi)
 	ui := &ColoredUi{
