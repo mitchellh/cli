@@ -73,7 +73,7 @@ func (c *CLI) Run() (int, error) {
 	c.once.Do(c.init)
 
 	// Just show the version and exit if instructed.
-	if c.IsVersion() {
+	if c.IsVersion() && c.Version != "" {
 		c.HelpWriter.Write([]byte(c.Version + "\n"))
 		return 1, nil
 	}
