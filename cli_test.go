@@ -34,12 +34,15 @@ func TestCLIIsVersion(t *testing.T) {
 		args      []string
 		isVersion bool
 	}{
-		{[]string{"foo", "-v"}, true},
-		{[]string{"foo", "-version"}, true},
-		{[]string{"foo", "--version"}, true},
-		{[]string{"foo", "-v", "bar"}, true},
+		{[]string{"-v"}, true},
+		{[]string{"-version"}, true},
+		{[]string{"--version"}, true},
+		{[]string{"-v", "foo"}, true},
 		{[]string{"foo", "bar"}, false},
 		{[]string{"-h", "bar"}, false},
+		{[]string{"foo", "-v"}, false},
+		{[]string{"foo", "-version"}, false},
+		{[]string{"foo", "--version"}, false},
 	}
 
 	for _, testCase := range testCases {

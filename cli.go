@@ -139,10 +139,12 @@ func (c *CLI) processArgs() {
 			continue
 		}
 
-		// Also lookup for version flag
-		if arg == "-v" || arg == "-version" || arg == "--version" {
-			c.isVersion = true
-			continue
+		// Also lookup for version flag if not in a subcommand
+		if c.subcommand == "" {
+			if arg == "-v" || arg == "-version" || arg == "--version" {
+				c.isVersion = true
+				continue
+			}
 		}
 
 		// If we didn't find a subcommand yet and this is the first non-flag
