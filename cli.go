@@ -17,6 +17,7 @@ type CLI struct {
 	// Commands is a mapping of subcommand names to a factory function
 	// for creating that Command implementation.
 	Commands map[string]CommandFactory
+	DefaultCommand CommandFactory
 
 	// Name defines the name of the CLI.
 	Name string
@@ -40,11 +41,12 @@ type CLI struct {
 	isHelp         bool
 	subcommand     string
 	subcommandArgs []string
+	isDefault      bool
 
 	isVersion bool
 }
 
-// NewClI returns a new CLI instance with sensible defaults.
+// NewCLI returns a new CLI instance with sensible defaults.
 func NewCLI(app, version string) *CLI {
 	return &CLI{
 		Name:     app,
@@ -59,6 +61,12 @@ func NewCLI(app, version string) *CLI {
 func (c *CLI) IsHelp() bool {
 	c.once.Do(c.init)
 	return c.isHelp
+}
+
+// IsDefault return whether or not we are going to use a default command
+func (c *CLI) IsDefault() bool {
+	c.once.Do(c.init)
+	return c.isDefault
 }
 
 // IsVersion returns whether or not the version flag is present within the
@@ -80,10 +88,19 @@ func (c *CLI) Run() (int, error) {
 
 	// Attempt to get the factory function for creating the command
 	// implementation. If the command is invalid or blank, it is an error.
-	commandFunc, ok := c.Commands[c.Subcommand()]
-	if !ok || c.Subcommand() == "" {
-		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
-		return 1, nil
+	var (
+		commandFunc CommandFactory
+		ok bool
+	)
+	if c.Subcommand() == "" && c.DefaultCommand != nil {
+		commandFunc = c.DefaultCommand
+		c.isDefault = true
+	} else {
+		commandFunc, ok = c.Commands[c.Subcommand()]
+		if !ok || c.Subcommand() == "" {
+			c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
+			return 1, nil
+		}
 	}
 
 	command, err := commandFunc()
@@ -93,6 +110,10 @@ func (c *CLI) Run() (int, error) {
 
 	// If we've been instructed to just print the help, then print it
 	if c.IsHelp() {
+		if c.IsDefault() {
+			c.Commands["*default (no subcommand)"] = c.DefaultCommand
+			c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
+		}
 		c.HelpWriter.Write([]byte(command.Help() + "\n"))
 		return 1, nil
 	}
@@ -155,5 +176,9 @@ func (c *CLI) processArgs() {
 			// The remaining args the subcommand arguments
 			c.subcommandArgs = c.Args[i+1:]
 		}
+	}
+	// If we didn't set subcommandArgs, then it might be using a DefaultCommand
+	if c.subcommandArgs == nil && c.DefaultCommand != nil {
+		c.subcommandArgs = c.Args
 	}
 }

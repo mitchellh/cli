@@ -178,3 +178,38 @@ func TestCLISubcommand(t *testing.T) {
 		}
 	}
 }
+
+func TestCLIDefaultCommand(t *testing.T) {
+	commandFoo := new(MockCommand)
+	commandBar := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"-bar", "-baz"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return commandFoo, nil
+			},
+		},
+		DefaultCommand: func() (Command, error) {
+			return commandBar, nil
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != commandBar.RunResult {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if !commandBar.RunCalled {
+		t.Fatalf("run should be called")
+	}
+
+	if !reflect.DeepEqual(commandBar.RunArgs, []string{"-bar", "-baz"}) {
+		t.Fatalf("bad args: %#v", commandBar.RunArgs)
+	}
+
+
+}
