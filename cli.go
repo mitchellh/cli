@@ -133,16 +133,15 @@ func (c *CLI) init() {
 
 func (c *CLI) processArgs() {
 	for i, arg := range c.Args {
-		// If the arg is a help flag, then we saw that, but don't save it.
-		if arg == "-h" || arg == "-help" || arg == "--help" {
-			c.isHelp = true
-			continue
-		}
 
-		// Also lookup for version flag if not in a subcommand
 		if c.subcommand == "" {
+			// Check for version and help flags if not in a subcommand
 			if arg == "-v" || arg == "-version" || arg == "--version" {
 				c.isVersion = true
+				continue
+			}
+			if arg == "-h" || arg == "-help" || arg == "--help" {
+				c.isHelp = true
 				continue
 			}
 		}

@@ -11,12 +11,15 @@ func TestCLIIsHelp(t *testing.T) {
 		args   []string
 		isHelp bool
 	}{
-		{[]string{"foo", "-h"}, true},
-		{[]string{"foo", "-help"}, true},
-		{[]string{"foo", "--help"}, true},
-		{[]string{"foo", "-h", "bar"}, true},
+		{[]string{"-h"}, true},
+		{[]string{"-help"}, true},
+		{[]string{"--help"}, true},
+		{[]string{"-h", "foo"}, true},
 		{[]string{"foo", "bar"}, false},
-		{[]string{"-h", "bar"}, true},
+		{[]string{"-v", "bar"}, false},
+		{[]string{"foo", "-h"}, false},
+		{[]string{"foo", "-help"}, false},
+		{[]string{"foo", "--help"}, false},
 	}
 
 	for _, testCase := range testCases {
@@ -122,9 +125,8 @@ func TestCLIRun_printHelp(t *testing.T) {
 
 func TestCLIRun_printCommandHelp(t *testing.T) {
 	testCases := [][]string{
-		{"foo", "-h"},
+		{"--help", "foo"},
 		{"-h", "foo"},
-		{"foo", "--help"},
 	}
 
 	for _, args := range testCases {
