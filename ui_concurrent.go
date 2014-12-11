@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -37,4 +38,20 @@ func (u *ConcurrentUi) Output(message string) {
 	defer u.l.Unlock()
 
 	u.Ui.Output(message)
+}
+
+func (u *ConcurrentUi) Askf(format string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(format, v...))
+}
+
+func (u *ConcurrentUi) Outputf(format string, v ...interface{}) {
+	u.Output(fmt.Sprintf(format, v...))
+}
+
+func (u *ConcurrentUi) Infof(format string, v ...interface{}) {
+	u.Info(fmt.Sprintf(format, v...))
+}
+
+func (u *ConcurrentUi) Errorf(format string, v ...interface{}) {
+	u.Error(fmt.Sprintf(format, v...))
 }

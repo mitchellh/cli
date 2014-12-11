@@ -47,6 +47,22 @@ func (u *MockUi) Output(message string) {
 	fmt.Fprint(u.OutputWriter, "\n")
 }
 
+func (u *MockUi) Askf(format string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(format, v...))
+}
+
+func (u *MockUi) Outputf(format string, v ...interface{}) {
+	u.Output(fmt.Sprintf(format, v...))
+}
+
+func (u *MockUi) Infof(format string, v ...interface{}) {
+	u.Info(fmt.Sprintf(format, v...))
+}
+
+func (u *MockUi) Errorf(format string, v ...interface{}) {
+	u.Error(fmt.Sprintf(format, v...))
+}
+
 func (u *MockUi) init() {
 	u.ErrorWriter = new(bytes.Buffer)
 	u.OutputWriter = new(bytes.Buffer)

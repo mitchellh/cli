@@ -46,6 +46,22 @@ func (u *ColoredUi) Error(message string) {
 	u.Ui.Error(u.colorize(message, u.ErrorColor))
 }
 
+func (u *ColoredUi) Askf(format string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(format, v...))
+}
+
+func (u *ColoredUi) Outputf(format string, v ...interface{}) {
+	u.Output(fmt.Sprintf(format, v...))
+}
+
+func (u *ColoredUi) Infof(format string, v ...interface{}) {
+	u.Info(fmt.Sprintf(format, v...))
+}
+
+func (u *ColoredUi) Errorf(format string, v ...interface{}) {
+	u.Error(fmt.Sprintf(format, v...))
+}
+
 func (u *ColoredUi) colorize(message string, color UiColor) string {
 	if color.Code == -1 {
 		return message

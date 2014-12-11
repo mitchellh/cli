@@ -31,6 +31,26 @@ type Ui interface {
 	Error(string)
 }
 
+// Uif is an interface that expands upon the original Ui interface adding
+// formatter functions.
+type Uif interface {
+	// Uif is an interface that extends the Ui interface, and as such includes
+	// all ui functions.
+	Ui
+
+	// Askf calls Ask after formatting the string.
+	Askf(string, ...interface{}) (string, error)
+
+	// Outputf calls Output after formatting the string.
+	Outputf(string, ...interface{})
+
+	// Infof calls Info after formatting the string.
+	Infof(string, ...interface{})
+
+	// Errorf calls Error after formatting the string.
+	Errorf(string, ...interface{})
+}
+
 // BasicUi is an implementation of Ui that just outputs to the given
 // writer. This UI is not threadsafe by default, but you can wrap it
 // in a ConcurrentUi to make it safe.
@@ -96,6 +116,22 @@ func (u *BasicUi) Info(message string) {
 func (u *BasicUi) Output(message string) {
 	fmt.Fprint(u.Writer, message)
 	fmt.Fprint(u.Writer, "\n")
+}
+
+func (u *BasicUi) Askf(format string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(format, v...))
+}
+
+func (u *BasicUi) Outputf(format string, v ...interface{}) {
+	u.Output(fmt.Sprintf(format, v...))
+}
+
+func (u *BasicUi) Infof(format string, v ...interface{}) {
+	u.Info(fmt.Sprintf(format, v...))
+}
+
+func (u *BasicUi) Errorf(format string, v ...interface{}) {
+	u.Error(fmt.Sprintf(format, v...))
 }
 
 // PrefixedUi is an implementation of Ui that prefixes messages.
