@@ -59,3 +59,16 @@ func TestColoredUi_Output(t *testing.T) {
 		t.Fatalf("bad: %#v %#v", mock.OutputWriter.String())
 	}
 }
+
+func TestColoredUi_Warn(t *testing.T) {
+	mock := new(MockUi)
+	ui := &ColoredUi{
+		WarnColor: UiColor{Code: 33},
+		Ui:        mock,
+	}
+	ui.Warn("foo")
+
+	if mock.ErrorWriter.String() != "\033[0;33mfoo\033[0m\n" {
+		t.Fatalf("bad: %#v %#v", mock.ErrorWriter.String())
+	}
+}
