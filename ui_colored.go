@@ -27,6 +27,7 @@ type ColoredUi struct {
 	OutputColor UiColor
 	InfoColor   UiColor
 	ErrorColor  UiColor
+	WarnColor   UiColor
 	Ui          Ui
 }
 
@@ -44,6 +45,10 @@ func (u *ColoredUi) Info(message string) {
 
 func (u *ColoredUi) Error(message string) {
 	u.Ui.Error(u.colorize(message, u.ErrorColor))
+}
+
+func (u *ColoredUi) Warn(message string) {
+	u.Ui.Warn(u.colorize(message, u.WarnColor))
 }
 
 func (u *ColoredUi) colorize(message string, color UiColor) string {
