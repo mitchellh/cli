@@ -45,6 +45,9 @@ func main() {
 		"bar": barCommandFactory,
 	}
 
+    // Optional DefaultCommand that will run if no command in Commands map is found.
+    c.DefaultCommand = defaultCommandFactory
+
 	exitStatus, err := c.Run()
 	if err != nil {
 		log.Println(err)
