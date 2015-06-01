@@ -15,7 +15,9 @@ type CLI struct {
 	Args []string
 
 	// Commands is a mapping of subcommand names to a factory function
-	// for creating that Command implementation.
+	// for creating that Command implementation. If there is a command
+	// with a blank string "", then it will be used as the default command
+	// if no subcommand is specified.
 	Commands map[string]CommandFactory
 
 	// Name defines the name of the CLI.
@@ -91,7 +93,7 @@ func (c *CLI) Run() (int, error) {
 	// Attempt to get the factory function for creating the command
 	// implementation. If the command is invalid or blank, it is an error.
 	commandFunc, ok := c.Commands[c.Subcommand()]
-	if !ok || c.Subcommand() == "" {
+	if !ok {
 		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
 		return 1, nil
 	}
@@ -167,6 +169,17 @@ func (c *CLI) processArgs() {
 
 			// The remaining args the subcommand arguments
 			c.subcommandArgs = c.Args[i+1:]
+		}
+	}
+
+	// If we never found a subcommand and support a default command, then
+	// switch to using that.
+	if c.subcommand == "" {
+		if _, ok := c.Commands[""]; ok {
+			args := c.topFlags
+			args = append(args, c.subcommandArgs...)
+			c.topFlags = nil
+			c.subcommandArgs = args
 		}
 	}
 }
