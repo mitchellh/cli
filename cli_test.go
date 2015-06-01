@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -92,6 +93,7 @@ func TestCLIRun_printHelp(t *testing.T) {
 		{},
 		{"-h"},
 		{"i-dont-exist"},
+		{"-bad-flag", "foo"},
 	}
 
 	for _, testCase := range testCases {
@@ -100,6 +102,11 @@ func TestCLIRun_printHelp(t *testing.T) {
 
 		cli := &CLI{
 			Args: testCase,
+			Commands: map[string]CommandFactory{
+				"foo": func() (Command, error) {
+					return new(MockCommand), nil
+				},
+			},
 			HelpFunc: func(map[string]CommandFactory) string {
 				return helpText
 			},
@@ -117,7 +124,7 @@ func TestCLIRun_printHelp(t *testing.T) {
 			continue
 		}
 
-		if buf.String() != (helpText + "\n") {
+		if !strings.Contains(buf.String(), helpText) {
 			t.Errorf("Args: %#v. Text: %v", testCase, buf.String())
 		}
 	}

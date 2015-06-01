@@ -40,6 +40,7 @@ type CLI struct {
 	isHelp         bool
 	subcommand     string
 	subcommandArgs []string
+	topFlags       []string
 
 	isVersion bool
 }
@@ -75,6 +76,15 @@ func (c *CLI) Run() (int, error) {
 	// Just show the version and exit if instructed.
 	if c.IsVersion() && c.Version != "" {
 		c.HelpWriter.Write([]byte(c.Version + "\n"))
+		return 1, nil
+	}
+
+	// If there is an invalid flag, then error
+	if len(c.topFlags) > 0 {
+		c.HelpWriter.Write([]byte(
+			"Invalid flags before the subcommand. If these flags are for\n" +
+				"the subcommand, please put them after the subcommand.\n\n"))
+		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
 		return 1, nil
 	}
 
@@ -133,7 +143,6 @@ func (c *CLI) init() {
 
 func (c *CLI) processArgs() {
 	for i, arg := range c.Args {
-
 		if c.subcommand == "" {
 			// Check for version and help flags if not in a subcommand
 			if arg == "-v" || arg == "-version" || arg == "--version" {
@@ -143,6 +152,11 @@ func (c *CLI) processArgs() {
 			if arg == "-h" || arg == "-help" || arg == "--help" {
 				c.isHelp = true
 				continue
+			}
+
+			if arg[0] == '-' {
+				// Record the arg...
+				c.topFlags = append(c.topFlags, arg)
 			}
 		}
 
