@@ -1,5 +1,7 @@
 package cli
 
+import "io"
+
 // A command is a runnable sub-command of a CLI.
 type Command interface {
 	// Help should return long-form help text that includes the command-line
@@ -21,3 +23,26 @@ type Command interface {
 // We need a factory because we may need to setup some state on the
 // struct that implements the command itself.
 type CommandFactory func() (Command, error)
+
+// OutputTextCommand implemented Command interface and is used to write text to
+// given writer
+type OutputTextCommand struct {
+	writer io.Writer
+	text   string
+}
+
+// Help is part of Command interface
+func (c OutputTextCommand) Help() string {
+	return c.text
+}
+
+// Synopsis is part of Command interface. Return Help()
+func (c OutputTextCommand) Synopsis() string {
+	return c.Help()
+}
+
+// Run is part of Command interface. Args will be ignored.
+func (c OutputTextCommand) Run(_ []string) int {
+	c.writer.Write([]byte(c.Help()))
+	return 1
+}

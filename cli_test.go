@@ -158,8 +158,81 @@ func TestCLIRun_printHelp(t *testing.T) {
 			continue
 		}
 
-		if !strings.Contains(buf.String(), helpText) {
-			t.Errorf("Args: %#v. Text: %v", testCase, buf.String())
+		expect := strings.TrimSpace(buf.String())
+		got := strings.TrimSpace(helpText)
+
+		if !strings.Contains(expect, got) {
+			t.Errorf("Args: %#v, expect: %#v, got %#v", testCase, expect, got)
+		}
+	}
+}
+
+func TestCLIRun_printBasicHelpFunc(t *testing.T) {
+	defaultExpect := `usage: app [--version] [--help] <command> [<args>]
+
+Available commands are:
+    bar    bar command
+    foo    foo command
+`
+	tests := []struct {
+		input  []string
+		expect string
+	}{
+		{
+			[]string{}, defaultExpect,
+		},
+		{
+			[]string{"-h"}, defaultExpect,
+		},
+		{
+			[]string{"i-dont-exist"}, defaultExpect,
+		},
+		{
+			[]string{"-bad-flag", "foo"},
+			`Invalid flags before the subcommand. If these flags are for
+the subcommand, please put them after the subcommand.
+
+usage: app [--version] [--help] <command> [<args>]
+
+Available commands are:
+    bar    bar command
+    foo    foo command
+
+`,
+		},
+	}
+
+	for _, test := range tests {
+		buf := new(bytes.Buffer)
+
+		cli := &CLI{
+			Args: test.input,
+			Commands: map[string]CommandFactory{
+				"foo": func() (Command, error) {
+					return &MockCommand{SynopsisText: "foo command"}, nil
+				},
+				"bar": func() (Command, error) {
+					return &MockCommand{SynopsisText: "bar command"}, nil
+				},
+			},
+			HelpFunc:   BasicHelpFunc("app"),
+			HelpWriter: buf,
+		}
+
+		code, err := cli.Run()
+		if err != nil {
+			t.Errorf("Args: %#v. Error: %s", test.input, err)
+			continue
+		}
+
+		if code != 1 {
+			t.Errorf("Args: %#v. Code: %d", test.input, code)
+			continue
+		}
+
+		if got := buf.String(); got != test.expect {
+			t.Errorf(
+				"Args: %#v, expect: %#v, got %#v", test.input, test.expect, got)
 		}
 	}
 }
@@ -195,8 +268,10 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
-		if buf.String() != (command.HelpText + "\n") {
-			t.Fatalf("bad: %#v", buf.String())
+		expect := strings.TrimSpace(command.HelpText)
+		got := strings.TrimSpace(buf.String())
+		if expect != got {
+			t.Fatalf("Expect %#v, got %#v.", expect, got)
 		}
 	}
 }

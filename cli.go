@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -26,6 +27,8 @@ type CLI struct {
 	// Version of the CLI.
 	Version string
 
+	SubcommandChooser func(*CLI) (CommandFactory, error)
+
 	// HelpFunc and HelpWriter are used to output help information, if
 	// requested.
 	//
@@ -45,6 +48,28 @@ type CLI struct {
 	topFlags       []string
 
 	isVersion bool
+}
+
+// DefaultSubcommandChooser is the default SubcommandChooser. It will return
+// the proper subcommand CommandFactory, or if that cannot be found and
+// IsVersion() return true, return versionCommanFactory. The fallback of
+// helpCommandFactory will be returned when there's nothing matched. error will
+// be non-nil if a proper subcommand can't be found, so client user can wrap
+// this function according to error value.
+func DefaultSubcommandChooser(c *CLI) (CommandFactory, error) {
+	if commandFunc, ok := c.Commands[c.Subcommand()]; ok {
+		return commandFunc, nil
+	} else if c.IsVersion() {
+		versionCommandFactory := func() (Command, error) {
+			return OutputTextCommand{c.HelpWriter, c.Version}, nil
+		}
+		return versionCommandFactory, fmt.Errorf("Failed to find subcommand")
+	} else {
+		helpCommandFactory := func() (Command, error) {
+			return OutputTextCommand{c.HelpWriter, c.HelpFunc(c.Commands)}, nil
+		}
+		return helpCommandFactory, fmt.Errorf("Failed to find subcommand")
+	}
 }
 
 // NewClI returns a new CLI instance with sensible defaults.
@@ -75,12 +100,6 @@ func (c *CLI) IsVersion() bool {
 func (c *CLI) Run() (int, error) {
 	c.once.Do(c.init)
 
-	// Just show the version and exit if instructed.
-	if c.IsVersion() && c.Version != "" {
-		c.HelpWriter.Write([]byte(c.Version + "\n"))
-		return 1, nil
-	}
-
 	// If there is an invalid flag, then error
 	if len(c.topFlags) > 0 {
 		c.HelpWriter.Write([]byte(
@@ -90,25 +109,16 @@ func (c *CLI) Run() (int, error) {
 		return 1, nil
 	}
 
-	// Attempt to get the factory function for creating the command
-	// implementation. If the command is invalid or blank, it is an error.
-	commandFunc, ok := c.Commands[c.Subcommand()]
-	if !ok {
-		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
-		return 1, nil
-	}
+	commandFunc, _ := c.SubcommandChooser(c)
 
 	command, err := commandFunc()
+
 	if err != nil {
 		return 0, err
 	}
-
-	// If we've been instructed to just print the help, then print it
 	if c.IsHelp() {
-		c.HelpWriter.Write([]byte(command.Help() + "\n"))
-		return 1, nil
+		command = OutputTextCommand{c.HelpWriter, command.Help()}
 	}
-
 	return command.Run(c.SubcommandArgs()), nil
 }
 
@@ -138,6 +148,10 @@ func (c *CLI) init() {
 
 	if c.HelpWriter == nil {
 		c.HelpWriter = os.Stderr
+	}
+
+	if c.SubcommandChooser == nil {
+		c.SubcommandChooser = DefaultSubcommandChooser
 	}
 
 	c.processArgs()
