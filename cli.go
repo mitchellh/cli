@@ -23,7 +23,8 @@ type CLI struct {
 	// Name defines the name of the CLI.
 	Name string
 
-	// Version of the CLI.
+	// Version of the CLI. If the version is an empty string, the --version
+	// switch will be omitted from the generated basic help.
 	Version string
 
 	// HelpFunc and HelpWriter are used to output help information, if
@@ -52,7 +53,7 @@ func NewCLI(app, version string) *CLI {
 	return &CLI{
 		Name:     app,
 		Version:  version,
-		HelpFunc: BasicHelpFunc(app),
+		HelpFunc: BasicHelpFunc(app, version != ""),
 	}
 
 }
@@ -129,10 +130,10 @@ func (c *CLI) SubcommandArgs() []string {
 
 func (c *CLI) init() {
 	if c.HelpFunc == nil {
-		c.HelpFunc = BasicHelpFunc("app")
+		c.HelpFunc = BasicHelpFunc("app", c.Version != "")
 
 		if c.Name != "" {
-			c.HelpFunc = BasicHelpFunc(c.Name)
+			c.HelpFunc = BasicHelpFunc(c.Name, c.Version != "")
 		}
 	}
 

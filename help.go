@@ -13,13 +13,20 @@ import (
 type HelpFunc func(map[string]CommandFactory) string
 
 // BasicHelpFunc generates some basic help output that is usually good enough
-// for most CLI applications.
-func BasicHelpFunc(app string) HelpFunc {
+// for most CLI applications. If hasVersion is true, "--version" will be listed
+// as an available option.
+func BasicHelpFunc(app string, hasVersion bool) HelpFunc {
 	return func(commands map[string]CommandFactory) string {
 		var buf bytes.Buffer
-		buf.WriteString(fmt.Sprintf(
-			"usage: %s [--version] [--help] <command> [<args>]\n\n",
-			app))
+		if hasVersion {
+			buf.WriteString(fmt.Sprintf(
+				"usage: %s [--version] [--help] <command> [<args>]\n\n",
+				app))
+		} else {
+			buf.WriteString(fmt.Sprintf(
+				"usage: %s [--help] <command> [<args>]\n\n",
+				app))
+		}
 		buf.WriteString("Available commands are:\n")
 
 		// Get the list of keys so we can sort them, and also get the maximum
