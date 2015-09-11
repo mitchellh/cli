@@ -27,6 +27,9 @@ type Ui interface {
 	// Output is called for normal standard output.
 	Output(string)
 
+	// OutputRaw is called for standard output without any extra characters.
+	OutputRaw(string)
+
 	// Info is called for information related to the previous output.
 	// In general this may be the exact same as Output, but this gives
 	// Ui implementors some flexibility with output formats.
@@ -123,6 +126,10 @@ func (u *BasicUi) Info(message string) {
 func (u *BasicUi) Output(message string) {
 	fmt.Fprint(u.Writer, message)
 	fmt.Fprint(u.Writer, "\n")
+}
+
+func (u *BasicUi) OutputRaw(message string) {
+	fmt.Fprint(u.Writer, message)
 }
 
 func (u *BasicUi) Warn(message string) {
