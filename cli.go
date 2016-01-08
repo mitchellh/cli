@@ -3,11 +3,32 @@ package cli
 import (
 	"io"
 	"os"
+	"strings"
 	"sync"
+
+	"github.com/armon/go-radix"
 )
 
 // CLI contains the state necessary to run subcommands and parse the
 // command line arguments.
+//
+// CLI also supports nested subcommands, such as "cli foo bar". To use
+// nested subcommands, the key in the Commands mapping below contains the
+// full subcommand. In this example, it would be "foo bar".
+//
+// If you use a CLI with nested subcommands, some semantics change due to
+// ambiguities:
+//
+//   * The help flag "-h" or "-help" will look at all args to determine
+//     the help function. For example: "otto apps list -h" will show the
+//     help for "apps list" but "otto apps -h" will show it for "apps".
+//     In the normal CLI, only the first subcommand is used.
+//
+//   * The help flag will list any subcommands that a command takes
+//     as well as the command's help itself. If there are no subcommands,
+//     it will note this. If the CLI itself has no subcommands, this entire
+//     section is omitted.
+//
 type CLI struct {
 	// Args is the list of command-line arguments received excluding
 	// the name of the app. For example, if the command "./cli foo bar"
@@ -18,6 +39,11 @@ type CLI struct {
 	// for creating that Command implementation. If there is a command
 	// with a blank string "", then it will be used as the default command
 	// if no subcommand is specified.
+	//
+	// If the key has a space in it, this will create a nested subcommand.
+	// For example, if the key is "foo bar", then to access it our CLI
+	// must be accessed with "./cli foo bar". See the docs for CLI for
+	// notes on how this changes some other behavior of the CLI as well.
 	Commands map[string]CommandFactory
 
 	// Name defines the name of the CLI.
@@ -39,6 +65,8 @@ type CLI struct {
 	HelpWriter io.Writer
 
 	once           sync.Once
+	commandTree    *radix.Tree
+	commandNested  bool
 	isHelp         bool
 	subcommand     string
 	subcommandArgs []string
@@ -140,6 +168,17 @@ func (c *CLI) init() {
 		c.HelpWriter = os.Stderr
 	}
 
+	// Build our command tree
+	c.commandTree = radix.New()
+	c.commandNested = false
+	for k, v := range c.Commands {
+		c.commandTree.Insert(k, v)
+		if strings.ContainsRune(k, ' ') {
+			c.commandNested = true
+		}
+	}
+
+	// Process the args
 	c.processArgs()
 }
 
@@ -166,6 +205,30 @@ func (c *CLI) processArgs() {
 		// argument, then this is our subcommand. j
 		if c.subcommand == "" && arg != "" && arg[0] != '-' {
 			c.subcommand = arg
+			if c.commandNested {
+				// Nested CLI, the subcommand is actually the entire
+				// arg list up to a flag that is still a valid subcommand.
+				// TODO: LongestPrefix
+				newI := i
+				for _, arg := range c.Args[i+1:] {
+					if arg == "" || arg[0] == '-' {
+						break
+					}
+
+					subcommand := c.subcommand + " " + arg
+					if _, ok := c.commandTree.Get(subcommand); ok {
+						c.subcommand = subcommand
+					}
+
+					newI++
+				}
+
+				// If we found a subcommand, then move i so that we
+				// get the proper arg list below
+				if strings.ContainsRune(c.subcommand, ' ') {
+					i = newI
+				}
+			}
 
 			// The remaining args the subcommand arguments
 			c.subcommandArgs = c.Args[i+1:]

@@ -151,6 +151,38 @@ func TestCLIRun_default(t *testing.T) {
 	}
 }
 
+func TestCLIRun_nested(t *testing.T) {
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"foo", "bar", "-bar", "-baz"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return new(MockCommand), nil
+			},
+			"foo bar": func() (Command, error) {
+				return command, nil
+			},
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != command.RunResult {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if !command.RunCalled {
+		t.Fatalf("run should be called")
+	}
+
+	if !reflect.DeepEqual(command.RunArgs, []string{"-bar", "-baz"}) {
+		t.Fatalf("bad args: %#v", command.RunArgs)
+	}
+}
+
 func TestCLIRun_printHelp(t *testing.T) {
 	testCases := [][]string{
 		{},
@@ -238,10 +270,42 @@ func TestCLISubcommand(t *testing.T) {
 		{[]string{"bar"}, "bar"},
 		{[]string{"foo", "-h"}, "foo"},
 		{[]string{"-h", "bar"}, "bar"},
+		{[]string{"foo", "bar", "-h"}, "foo"},
 	}
 
 	for _, testCase := range testCases {
 		cli := &CLI{Args: testCase.args}
+		result := cli.Subcommand()
+
+		if result != testCase.subcommand {
+			t.Errorf("Expected %#v, got %#v. Args: %#v",
+				testCase.subcommand, result, testCase.args)
+		}
+	}
+}
+
+func TestCLISubcommand_nested(t *testing.T) {
+	testCases := []struct {
+		args       []string
+		subcommand string
+	}{
+		{[]string{"bar"}, "bar"},
+		{[]string{"foo", "-h"}, "foo"},
+		{[]string{"-h", "bar"}, "bar"},
+		{[]string{"foo", "bar", "-h"}, "foo bar"},
+		{[]string{"foo", "bar", "baz", "-h"}, "foo bar"},
+		{[]string{"foo", "bar", "-h", "baz"}, "foo bar"},
+	}
+
+	for _, testCase := range testCases {
+		cli := &CLI{
+			Args: testCase.args,
+			Commands: map[string]CommandFactory{
+				"foo bar": func() (Command, error) {
+					return new(MockCommand), nil
+				},
+			},
+		}
 		result := cli.Subcommand()
 
 		if result != testCase.subcommand {
