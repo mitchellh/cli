@@ -262,6 +262,47 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 	}
 }
 
+func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
+	testCases := [][]string{
+		{"--help", "foo"},
+		{"-h", "foo"},
+	}
+
+	for _, args := range testCases {
+		command := &MockCommandHelpTemplate{
+			MockCommand: MockCommand{
+				HelpText: "donuts",
+			},
+
+			HelpTemplateText: "hello {{.Help}}",
+		}
+
+		buf := new(bytes.Buffer)
+		cli := &CLI{
+			Args: args,
+			Commands: map[string]CommandFactory{
+				"foo": func() (Command, error) {
+					return command, nil
+				},
+			},
+			HelpWriter: buf,
+		}
+
+		exitCode, err := cli.Run()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if exitCode != 1 {
+			t.Fatalf("bad exit code: %d", exitCode)
+		}
+
+		if buf.String() != "hello "+command.HelpText+"\n" {
+			t.Fatalf("bad: %#v", buf.String())
+		}
+	}
+}
+
 func TestCLISubcommand(t *testing.T) {
 	testCases := []struct {
 		args       []string

@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"sync"
+	"text/template"
 
 	"github.com/armon/go-radix"
 )
@@ -133,11 +135,18 @@ func (c *CLI) Run() (int, error) {
 
 	// If we've been instructed to just print the help, then print it
 	if c.IsHelp() {
-		c.HelpWriter.Write([]byte(command.Help() + "\n"))
+		c.commandHelp(command)
 		return 1, nil
 	}
 
-	return command.Run(c.SubcommandArgs()), nil
+	code := command.Run(c.SubcommandArgs())
+	if code == RunResultHelp {
+		// Requesting help
+		c.commandHelp(command)
+		return 1, nil
+	}
+
+	return code, nil
 }
 
 // Subcommand returns the subcommand that the CLI would execute. For
@@ -180,6 +189,36 @@ func (c *CLI) init() {
 
 	// Process the args
 	c.processArgs()
+}
+
+func (c *CLI) commandHelp(command Command) {
+	// Get the template to use
+	tpl := "{{.Help}}"
+	if t, ok := command.(CommandHelpTemplate); ok {
+		tpl = t.HelpTemplate()
+	}
+	if !strings.HasSuffix(tpl, "\n") {
+		tpl += "\n"
+	}
+
+	// Parse it
+	t, err := template.New("root").Parse(tpl)
+	if err != nil {
+		t = template.Must(template.New("root").Parse(fmt.Sprintf(
+			"Internal error! Failed to parse command help template: %s\n", err)))
+	}
+
+	// Write
+	err = t.Execute(c.HelpWriter, map[string]interface{}{
+		"Help": command.Help(),
+	})
+	if err == nil {
+		return
+	}
+
+	// An error, just output...
+	c.HelpWriter.Write([]byte(fmt.Sprintf(
+		"Internal error rendering help: %s", err)))
 }
 
 func (c *CLI) processArgs() {
