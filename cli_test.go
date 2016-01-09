@@ -151,6 +151,64 @@ func TestCLIRun_default(t *testing.T) {
 	}
 }
 
+func TestCLIRun_nested(t *testing.T) {
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"foo", "bar", "-bar", "-baz"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return new(MockCommand), nil
+			},
+			"foo bar": func() (Command, error) {
+				return command, nil
+			},
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != command.RunResult {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if !command.RunCalled {
+		t.Fatalf("run should be called")
+	}
+
+	if !reflect.DeepEqual(command.RunArgs, []string{"-bar", "-baz"}) {
+		t.Fatalf("bad args: %#v", command.RunArgs)
+	}
+}
+
+func TestCLIRun_nestedMissingParent(t *testing.T) {
+	buf := new(bytes.Buffer)
+	cli := &CLI{
+		Args: []string{"foo"},
+		Commands: map[string]CommandFactory{
+			"foo bar": func() (Command, error) {
+				return &MockCommand{SynopsisText: "hi!"}, nil
+			},
+		},
+		HelpWriter: buf,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 1 {
+		t.Fatalf("bad exit code: %d", exitCode)
+	}
+
+	if buf.String() != testCommandNestedMissingParent {
+		t.Fatalf("bad: %#v", buf.String())
+	}
+}
+
 func TestCLIRun_printHelp(t *testing.T) {
 	testCases := [][]string{
 		{},
@@ -230,6 +288,90 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 	}
 }
 
+func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
+	testCases := [][]string{
+		{"--help", "foo"},
+		{"-h", "foo"},
+	}
+
+	for _, args := range testCases {
+		command := &MockCommand{
+			HelpText: "donuts",
+		}
+
+		buf := new(bytes.Buffer)
+		cli := &CLI{
+			Args: args,
+			Commands: map[string]CommandFactory{
+				"foo": func() (Command, error) {
+					return command, nil
+				},
+				"foo bar": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"foo longer": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+			},
+			HelpWriter: buf,
+		}
+
+		exitCode, err := cli.Run()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if exitCode != 1 {
+			t.Fatalf("bad exit code: %d", exitCode)
+		}
+
+		if buf.String() != testCommandHelpSubcommandsOutput {
+			t.Fatalf("bad: %#v", buf.String())
+		}
+	}
+}
+
+func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
+	testCases := [][]string{
+		{"--help", "foo"},
+		{"-h", "foo"},
+	}
+
+	for _, args := range testCases {
+		command := &MockCommandHelpTemplate{
+			MockCommand: MockCommand{
+				HelpText: "donuts",
+			},
+
+			HelpTemplateText: "hello {{.Help}}",
+		}
+
+		buf := new(bytes.Buffer)
+		cli := &CLI{
+			Args: args,
+			Commands: map[string]CommandFactory{
+				"foo": func() (Command, error) {
+					return command, nil
+				},
+			},
+			HelpWriter: buf,
+		}
+
+		exitCode, err := cli.Run()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if exitCode != 1 {
+			t.Fatalf("bad exit code: %d", exitCode)
+		}
+
+		if buf.String() != "hello "+command.HelpText+"\n" {
+			t.Fatalf("bad: %#v", buf.String())
+		}
+	}
+}
+
 func TestCLISubcommand(t *testing.T) {
 	testCases := []struct {
 		args       []string
@@ -238,6 +380,7 @@ func TestCLISubcommand(t *testing.T) {
 		{[]string{"bar"}, "bar"},
 		{[]string{"foo", "-h"}, "foo"},
 		{[]string{"-h", "bar"}, "bar"},
+		{[]string{"foo", "bar", "-h"}, "foo"},
 	}
 
 	for _, testCase := range testCases {
@@ -250,3 +393,51 @@ func TestCLISubcommand(t *testing.T) {
 		}
 	}
 }
+
+func TestCLISubcommand_nested(t *testing.T) {
+	testCases := []struct {
+		args       []string
+		subcommand string
+	}{
+		{[]string{"bar"}, "bar"},
+		{[]string{"foo", "-h"}, "foo"},
+		{[]string{"-h", "bar"}, "bar"},
+		{[]string{"foo", "bar", "-h"}, "foo bar"},
+		{[]string{"foo", "bar", "baz", "-h"}, "foo bar"},
+		{[]string{"foo", "bar", "-h", "baz"}, "foo bar"},
+	}
+
+	for _, testCase := range testCases {
+		cli := &CLI{
+			Args: testCase.args,
+			Commands: map[string]CommandFactory{
+				"foo bar": func() (Command, error) {
+					return new(MockCommand), nil
+				},
+			},
+		}
+		result := cli.Subcommand()
+
+		if result != testCase.subcommand {
+			t.Errorf("Expected %#v, got %#v. Args: %#v",
+				testCase.subcommand, result, testCase.args)
+		}
+	}
+}
+
+const testCommandNestedMissingParent = `This command is accessed by using one of the subcommands below.
+
+Subcommands:
+
+    bar    hi!
+
+`
+
+const testCommandHelpSubcommandsOutput = `donuts
+
+Subcommands:
+
+    bar       hi!
+    longer    hi!
+
+`
