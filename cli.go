@@ -22,6 +22,12 @@ import (
 // If you use a CLI with nested subcommands, some semantics change due to
 // ambiguities:
 //
+//   * We use longest prefix matching to find a matching subcommand. This
+//     means if you register "foo bar" and the user executes "cli foo qux",
+//     the "foo" commmand will be executed with the arg "qux". It is up to
+//     you to handle these args. One option is to just return the special
+//     help return code `RunResultHelp` to display help and exit.
+//
 //   * The help flag "-h" or "-help" will look at all args to determine
 //     the help function. For example: "otto apps list -h" will show the
 //     help for "apps list" but "otto apps -h" will show it for "apps".
@@ -31,6 +37,10 @@ import (
 //     as well as the command's help itself. If there are no subcommands,
 //     it will note this. If the CLI itself has no subcommands, this entire
 //     section is omitted.
+//
+//   * Any parent commands that don't exist are automatically created as
+//     no-op commands that just show help for other subcommands. For example,
+//     if you only register "foo bar", then "foo" is automatically created.
 //
 type CLI struct {
 	// Args is the list of command-line arguments received excluding
@@ -182,9 +192,51 @@ func (c *CLI) init() {
 	c.commandTree = radix.New()
 	c.commandNested = false
 	for k, v := range c.Commands {
+		k = strings.TrimSpace(k)
 		c.commandTree.Insert(k, v)
 		if strings.ContainsRune(k, ' ') {
 			c.commandNested = true
+		}
+	}
+
+	// Go through the key and fill in any missing parent commands
+	if c.commandNested {
+		var walkFn radix.WalkFn
+		toInsert := make(map[string]struct{})
+		walkFn = func(k string, raw interface{}) bool {
+			idx := strings.LastIndex(k, " ")
+			if idx == -1 {
+				// If there is no space, just ignore top level commands
+				return false
+			}
+
+			// Trim up to that space so we can get the expected parent
+			k = k[:idx]
+			if _, ok := c.commandTree.Get(k); ok {
+				// Yay we have the parent!
+				return false
+			}
+
+			// We're missing the parent, so let's insert this
+			toInsert[k] = struct{}{}
+
+			// Call the walk function recursively so we check this one too
+			return walkFn(k, nil)
+		}
+
+		// Walk!
+		c.commandTree.Walk(walkFn)
+
+		// Insert any that we're missing
+		for k, _ := range toInsert {
+			var f CommandFactory = func() (Command, error) {
+				return &MockCommand{
+					HelpText:  "This command is accessed by using one of the subcommands below.",
+					RunResult: RunResultHelp,
+				}, nil
+			}
+
+			c.commandTree.Insert(k, f)
 		}
 	}
 

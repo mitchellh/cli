@@ -183,6 +183,32 @@ func TestCLIRun_nested(t *testing.T) {
 	}
 }
 
+func TestCLIRun_nestedMissingParent(t *testing.T) {
+	buf := new(bytes.Buffer)
+	cli := &CLI{
+		Args: []string{"foo"},
+		Commands: map[string]CommandFactory{
+			"foo bar": func() (Command, error) {
+				return &MockCommand{SynopsisText: "hi!"}, nil
+			},
+		},
+		HelpWriter: buf,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 1 {
+		t.Fatalf("bad exit code: %d", exitCode)
+	}
+
+	if buf.String() != testCommandNestedMissingParent {
+		t.Fatalf("bad: %#v", buf.String())
+	}
+}
+
 func TestCLIRun_printHelp(t *testing.T) {
 	testCases := [][]string{
 		{},
@@ -398,6 +424,14 @@ func TestCLISubcommand_nested(t *testing.T) {
 		}
 	}
 }
+
+const testCommandNestedMissingParent = `This command is accessed by using one of the subcommands below.
+
+Subcommands:
+
+    bar    hi!
+
+`
 
 const testCommandHelpSubcommandsOutput = `donuts
 
