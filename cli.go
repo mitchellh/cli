@@ -356,25 +356,10 @@ func (c *CLI) processArgs() {
 			if c.commandNested {
 				// Nested CLI, the subcommand is actually the entire
 				// arg list up to a flag that is still a valid subcommand.
-				// TODO: LongestPrefix
-				newI := i
-				for _, arg := range c.Args[i+1:] {
-					if arg == "" || arg[0] == '-' {
-						break
-					}
-
-					subcommand := c.subcommand + " " + arg
-					if _, ok := c.commandTree.Get(subcommand); ok {
-						c.subcommand = subcommand
-					}
-
-					newI++
-				}
-
-				// If we found a subcommand, then move i so that we
-				// get the proper arg list below
-				if strings.ContainsRune(c.subcommand, ' ') {
-					i = newI
+				k, _, ok := c.commandTree.LongestPrefix(strings.Join(c.Args[i:], " "))
+				if ok {
+					c.subcommand = k
+					i += strings.Count(k, " ")
 				}
 			}
 
