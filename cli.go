@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"text/template"
@@ -193,7 +194,7 @@ func (c *CLI) init() {
 
 func (c *CLI) commandHelp(command Command) {
 	// Get the template to use
-	tpl := "{{.Help}}"
+	tpl := strings.TrimSpace(defaultHelpTemplate)
 	if t, ok := command.(CommandHelpTemplate); ok {
 		tpl = t.HelpTemplate()
 	}
@@ -208,10 +209,66 @@ func (c *CLI) commandHelp(command Command) {
 			"Internal error! Failed to parse command help template: %s\n", err)))
 	}
 
-	// Write
-	err = t.Execute(c.HelpWriter, map[string]interface{}{
+	// Template data
+	data := map[string]interface{}{
+		"Name": c.Name,
 		"Help": command.Help(),
-	})
+	}
+
+	// Build subcommand list if we have it
+	var subcommands []map[string]interface{}
+	if c.commandNested {
+		// Get the matching keys
+		var keys []string
+		prefix := c.Subcommand() + " "
+		c.commandTree.WalkPrefix(prefix, func(k string, raw interface{}) bool {
+			keys = append(keys, k)
+			return false
+		})
+
+		// Sort the keys
+		sort.Strings(keys)
+
+		// Figure out the padding length
+		var longest int
+		for _, k := range keys {
+			if v := len(k); v > longest {
+				longest = v
+			}
+		}
+
+		// Go through and create their structures
+		subcommands = make([]map[string]interface{}, len(keys))
+		for i, k := range keys {
+			raw, ok := c.commandTree.Get(k)
+			if !ok {
+				// We just checked that it should be here above. If it is
+				// isn't, there are serious problems.
+				panic("value is missing")
+			}
+
+			// Get the command
+			sub, err := raw.(CommandFactory)()
+			if err != nil {
+				c.HelpWriter.Write([]byte(fmt.Sprintf(
+					"Error instantiating %q: %s", k, err)))
+			}
+
+			// Determine some info
+			name := strings.TrimPrefix(k, prefix)
+
+			subcommands[i] = map[string]interface{}{
+				"Name":        name,
+				"NameAligned": name + strings.Repeat(" ", longest-len(k)),
+				"Help":        sub.Help(),
+				"Synopsis":    sub.Synopsis(),
+			}
+		}
+	}
+	data["Subcommands"] = subcommands
+
+	// Write
+	err = t.Execute(c.HelpWriter, data)
 	if err == nil {
 		return
 	}
@@ -285,3 +342,12 @@ func (c *CLI) processArgs() {
 		}
 	}
 }
+
+const defaultHelpTemplate = `
+{{.Help}}{{if gt (len .Subcommands) 0}}
+
+Subcommands:
+{{ range $value := .Subcommands }}
+    {{ $value.NameAligned }}    {{ $value.Synopsis }}{{ end }}
+{{ end }}
+`
