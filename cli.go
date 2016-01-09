@@ -123,13 +123,13 @@ func (c *CLI) Run() (int, error) {
 
 	// Attempt to get the factory function for creating the command
 	// implementation. If the command is invalid or blank, it is an error.
-	commandFunc, ok := c.Commands[c.Subcommand()]
+	raw, ok := c.commandTree.Get(c.Subcommand())
 	if !ok {
 		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
 		return 1, nil
 	}
 
-	command, err := commandFunc()
+	command, err := raw.(CommandFactory)()
 	if err != nil {
 		return 0, err
 	}
