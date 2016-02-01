@@ -278,7 +278,7 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
@@ -321,7 +321,7 @@ func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
@@ -362,7 +362,7 @@ func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
