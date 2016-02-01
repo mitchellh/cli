@@ -141,7 +141,7 @@ func (c *CLI) Run() (int, error) {
 
 	command, err := raw.(CommandFactory)()
 	if err != nil {
-		return 0, err
+		return 1, err
 	}
 
 	// If we've been instructed to just print the help, then print it
