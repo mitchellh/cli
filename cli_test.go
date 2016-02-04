@@ -324,6 +324,9 @@ func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 				"foo longer": func() (Command, error) {
 					return &MockCommand{SynopsisText: "hi!"}, nil
 				},
+				"foo longer longest": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
 			},
 			HelpWriter: buf,
 		}
@@ -338,7 +341,7 @@ func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 		}
 
 		if buf.String() != testCommandHelpSubcommandsOutput {
-			t.Fatalf("bad: %#v", buf.String())
+			t.Fatalf("bad: %#v\n\n'%#v'\n\n'%#v'", args, buf.String(), testCommandHelpSubcommandsOutput)
 		}
 	}
 }

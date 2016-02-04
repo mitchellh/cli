@@ -289,15 +289,14 @@ func (c *CLI) commandHelp(command Command) {
 	}
 
 	// Build subcommand list if we have it
-	var subcommands []map[string]interface{}
+	var subcommandsTpl []map[string]interface{}
 	if c.commandNested {
 		// Get the matching keys
-		var keys []string
-		prefix := c.Subcommand() + " "
-		c.commandTree.WalkPrefix(prefix, func(k string, raw interface{}) bool {
+		subcommands := c.helpCommands(c.Subcommand())
+		keys := make([]string, 0, len(subcommands))
+		for k, _ := range subcommands {
 			keys = append(keys, k)
-			return false
-		})
+		}
 
 		// Sort the keys
 		sort.Strings(keys)
@@ -311,34 +310,30 @@ func (c *CLI) commandHelp(command Command) {
 		}
 
 		// Go through and create their structures
-		subcommands = make([]map[string]interface{}, len(keys))
-		for i, k := range keys {
-			raw, ok := c.commandTree.Get(k)
-			if !ok {
-				// We just checked that it should be here above. If it is
-				// isn't, there are serious problems.
-				panic("value is missing")
-			}
-
+		subcommandsTpl = make([]map[string]interface{}, 0, len(subcommands))
+		for k, raw := range subcommands {
 			// Get the command
-			sub, err := raw.(CommandFactory)()
+			sub, err := raw()
 			if err != nil {
 				c.HelpWriter.Write([]byte(fmt.Sprintf(
 					"Error instantiating %q: %s", k, err)))
 			}
 
-			// Determine some info
-			name := strings.TrimPrefix(k, prefix)
+			// Find the last space and make sure we only include that last part
+			name := k
+			if idx := strings.LastIndex(k, " "); idx > -1 {
+				name = name[idx+1:]
+			}
 
-			subcommands[i] = map[string]interface{}{
+			subcommandsTpl = append(subcommandsTpl, map[string]interface{}{
 				"Name":        name,
 				"NameAligned": name + strings.Repeat(" ", longest-len(k)),
 				"Help":        sub.Help(),
 				"Synopsis":    sub.Synopsis(),
-			}
+			})
 		}
 	}
-	data["Subcommands"] = subcommands
+	data["Subcommands"] = subcommandsTpl
 
 	// Write
 	err = t.Execute(c.HelpWriter, data)
