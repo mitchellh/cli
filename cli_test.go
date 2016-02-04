@@ -211,8 +211,47 @@ func TestCLIRun_nestedMissingParent(t *testing.T) {
 
 func TestCLIRun_printHelp(t *testing.T) {
 	testCases := [][]string{
-		{},
 		{"-h"},
+		{"--help"},
+	}
+
+	for _, testCase := range testCases {
+		buf := new(bytes.Buffer)
+		helpText := "foo"
+
+		cli := &CLI{
+			Args: testCase,
+			Commands: map[string]CommandFactory{
+				"foo": func() (Command, error) {
+					return new(MockCommand), nil
+				},
+			},
+			HelpFunc: func(map[string]CommandFactory) string {
+				return helpText
+			},
+			HelpWriter: buf,
+		}
+
+		code, err := cli.Run()
+		if err != nil {
+			t.Errorf("Args: %#v. Error: %s", testCase, err)
+			continue
+		}
+
+		if code != 0 {
+			t.Errorf("Args: %#v. Code: %d", testCase, code)
+			continue
+		}
+
+		if !strings.Contains(buf.String(), helpText) {
+			t.Errorf("Args: %#v. Text: %v", testCase, buf.String())
+		}
+	}
+}
+
+func TestCLIRun_printHelpIllegal(t *testing.T) {
+	testCases := [][]string{
+		{},
 		{"i-dont-exist"},
 		{"-bad-flag", "foo"},
 	}
