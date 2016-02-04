@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -225,10 +226,17 @@ func TestCLIRun_printHelp(t *testing.T) {
 			Args: testCase,
 			Commands: map[string]CommandFactory{
 				"foo": func() (Command, error) {
+					return &MockCommand{HelpText: helpText}, nil
+				},
+				"foo sub42": func() (Command, error) {
 					return new(MockCommand), nil
 				},
 			},
-			HelpFunc: func(map[string]CommandFactory) string {
+			HelpFunc: func(m map[string]CommandFactory) string {
+				if len(m) != 1 || m["foo"] == nil {
+					return fmt.Sprintf("error: contained sub: %#v", m)
+				}
+
 				return helpText
 			},
 			HelpWriter: buf,
@@ -243,6 +251,10 @@ func TestCLIRun_printHelp(t *testing.T) {
 		if code != 1 {
 			t.Errorf("Args: %#v. Code: %d", testCase, code)
 			continue
+		}
+
+		if strings.Contains(buf.String(), "error") {
+			t.Errorf("Args: %#v. Text: %v", testCase, buf.String())
 		}
 
 		if !strings.Contains(buf.String(), helpText) {
