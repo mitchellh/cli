@@ -122,6 +122,12 @@ func (c *CLI) Run() (int, error) {
 		return 0, nil
 	}
 
+	// Just print the help when only '-h' or '--help' is passed.
+	if c.IsHelp() && c.Subcommand() == "" {
+		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
+		return 0, nil
+	}
+
 	// If there is an invalid flag, then error
 	if len(c.topFlags) > 0 {
 		c.HelpWriter.Write([]byte(
