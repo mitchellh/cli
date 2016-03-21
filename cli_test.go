@@ -20,9 +20,10 @@ func TestCLIIsHelp(t *testing.T) {
 		{[]string{"-h", "foo"}, true},
 		{[]string{"foo", "bar"}, false},
 		{[]string{"-v", "bar"}, false},
-		{[]string{"foo", "-h"}, false},
-		{[]string{"foo", "-help"}, false},
-		{[]string{"foo", "--help"}, false},
+		{[]string{"foo", "-h"}, true},
+		{[]string{"foo", "-help"}, true},
+		{[]string{"foo", "--help"}, true},
+		{[]string{"foo", "bar", "-h"}, true},
 	}
 
 	for _, testCase := range testCases {

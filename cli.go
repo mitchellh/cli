@@ -387,14 +387,15 @@ func (c *CLI) helpCommands(prefix string) map[string]CommandFactory {
 
 func (c *CLI) processArgs() {
 	for i, arg := range c.Args {
+		if arg == "-h" || arg == "-help" || arg == "--help" {
+			c.isHelp = true
+			continue
+		}
+
 		if c.subcommand == "" {
 			// Check for version and help flags if not in a subcommand
 			if arg == "-v" || arg == "-version" || arg == "--version" {
 				c.isVersion = true
-				continue
-			}
-			if arg == "-h" || arg == "-help" || arg == "--help" {
-				c.isHelp = true
 				continue
 			}
 
