@@ -300,6 +300,43 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 	}
 }
 
+func TestCLIRun_printCommandHelpNested(t *testing.T) {
+	testCases := [][]string{
+		{"--help", "foo", "bar"},
+		{"-h", "foo", "bar"},
+	}
+
+	for _, args := range testCases {
+		command := &MockCommand{
+			HelpText: "donuts",
+		}
+
+		buf := new(bytes.Buffer)
+		cli := &CLI{
+			Args: args,
+			Commands: map[string]CommandFactory{
+				"foo bar": func() (Command, error) {
+					return command, nil
+				},
+			},
+			HelpWriter: buf,
+		}
+
+		exitCode, err := cli.Run()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if exitCode != 1 {
+			t.Fatalf("bad exit code: %d", exitCode)
+		}
+
+		if buf.String() != (command.HelpText + "\n") {
+			t.Fatalf("bad: %#v", buf.String())
+		}
+	}
+}
+
 func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 	testCases := [][]string{
 		{"--help", "foo"},
@@ -420,6 +457,7 @@ func TestCLISubcommand_nested(t *testing.T) {
 		{[]string{"foo", "bar", "-h"}, "foo bar"},
 		{[]string{"foo", "bar", "baz", "-h"}, "foo bar"},
 		{[]string{"foo", "bar", "-h", "baz"}, "foo bar"},
+		{[]string{"-h", "foo", "bar"}, "foo bar"},
 	}
 
 	for _, testCase := range testCases {
