@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -152,6 +153,49 @@ func TestCLIRun_default(t *testing.T) {
 	}
 }
 
+func TestCLIRun_helpNested(t *testing.T) {
+	helpCalled := false
+	buf := new(bytes.Buffer)
+	cli := &CLI{
+		Args: []string{"--help"},
+		Commands: map[string]CommandFactory{
+			"foo sub42": func() (Command, error) {
+				return new(MockCommand), nil
+			},
+		},
+		HelpFunc: func(m map[string]CommandFactory) string {
+			helpCalled = true
+
+			var keys []string
+			for k, _ := range m {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
+			expected := []string{"foo"}
+			if !reflect.DeepEqual(keys, expected) {
+				return fmt.Sprintf("error: contained sub: %#v", keys)
+			}
+
+			return ""
+		},
+		HelpWriter: buf,
+	}
+
+	code, err := cli.Run()
+	if err != nil {
+		t.Fatalf("Error: %s", err)
+	}
+
+	if code != 1 {
+		t.Fatalf("Code: %d", code)
+	}
+
+	if !helpCalled {
+		t.Fatal("help not called")
+	}
+}
+
 func TestCLIRun_nested(t *testing.T) {
 	command := new(MockCommand)
 	cli := &CLI{
@@ -233,8 +277,15 @@ func TestCLIRun_printHelp(t *testing.T) {
 				},
 			},
 			HelpFunc: func(m map[string]CommandFactory) string {
-				if len(m) != 1 || m["foo"] == nil {
-					return fmt.Sprintf("error: contained sub: %#v", m)
+				var keys []string
+				for k, _ := range m {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+
+				expected := []string{"foo"}
+				if !reflect.DeepEqual(keys, expected) {
+					return fmt.Sprintf("error: contained sub: %#v", keys)
 				}
 
 				return helpText
