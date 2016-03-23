@@ -10,6 +10,8 @@ go:
   - 1.6
   - tip
 
+script: make test testrace
+
 matrix:
   allow_failures:
     - go: tip
