@@ -24,6 +24,11 @@ func TestCLIIsHelp(t *testing.T) {
 		{[]string{"foo", "-help"}, true},
 		{[]string{"foo", "--help"}, true},
 		{[]string{"foo", "bar", "-h"}, true},
+		{[]string{"foo", "bar", "-help"}, true},
+		{[]string{"foo", "bar", "--help"}, true},
+		{[]string{"foo", "bar", "--", "zip", "-h"}, false},
+		{[]string{"foo", "bar", "--", "zip", "-help"}, false},
+		{[]string{"foo", "bar", "--", "zip", "--help"}, false},
 	}
 
 	for _, testCase := range testCases {
@@ -41,6 +46,9 @@ func TestCLIIsVersion(t *testing.T) {
 		args      []string
 		isVersion bool
 	}{
+		{[]string{"--", "-v"}, false},
+		{[]string{"--", "-version"}, false},
+		{[]string{"--", "--version"}, false},
 		{[]string{"-v"}, true},
 		{[]string{"-version"}, true},
 		{[]string{"--version"}, true},
@@ -50,6 +58,9 @@ func TestCLIIsVersion(t *testing.T) {
 		{[]string{"foo", "-v"}, false},
 		{[]string{"foo", "-version"}, false},
 		{[]string{"foo", "--version"}, false},
+		{[]string{"foo", "--", "zip", "-v"}, false},
+		{[]string{"foo", "--", "zip", "-version"}, false},
+		{[]string{"foo", "--", "zip", "--version"}, false},
 	}
 
 	for _, testCase := range testCases {
