@@ -10,7 +10,7 @@ go:
   - 1.6
   - tip
 
-script: make test testrace
+script: make updatedeps test testrace
 
 matrix:
   allow_failures:
