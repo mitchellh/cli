@@ -31,28 +31,55 @@ type ColoredUi struct {
 	Ui          Ui
 }
 
+// Ensure ColoredUi implements Ui.
+var _ Ui = new(ColoredUi)
+
 func (u *ColoredUi) Ask(query string) (string, error) {
 	return u.Ui.Ask(u.colorize(query, u.OutputColor))
+}
+
+func (u *ColoredUi) Askf(f string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(f, v...))
 }
 
 func (u *ColoredUi) AskSecret(query string) (string, error) {
 	return u.Ui.AskSecret(u.colorize(query, u.OutputColor))
 }
 
+func (u *ColoredUi) AskSecretf(f string, v ...interface{}) (string, error) {
+	return u.AskSecret(fmt.Sprintf(f, v...))
+}
+
 func (u *ColoredUi) Output(message string) {
 	u.Ui.Output(u.colorize(message, u.OutputColor))
+}
+
+func (u *ColoredUi) Outputf(f string, v ...interface{}) {
+	u.Output(fmt.Sprintf(f, v...))
 }
 
 func (u *ColoredUi) Info(message string) {
 	u.Ui.Info(u.colorize(message, u.InfoColor))
 }
 
+func (u *ColoredUi) Infof(f string, v ...interface{}) {
+	u.Info(fmt.Sprintf(f, v...))
+}
+
 func (u *ColoredUi) Error(message string) {
 	u.Ui.Error(u.colorize(message, u.ErrorColor))
 }
 
+func (u *ColoredUi) Errorf(f string, v ...interface{}) {
+	u.Error(fmt.Sprintf(f, v...))
+}
+
 func (u *ColoredUi) Warn(message string) {
 	u.Ui.Warn(u.colorize(message, u.WarnColor))
+}
+
+func (u *ColoredUi) Warnf(f string, v ...interface{}) {
+	u.Warn(fmt.Sprintf(f, v...))
 }
 
 func (u *ColoredUi) colorize(message string, color UiColor) string {

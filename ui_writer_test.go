@@ -1,13 +1,6 @@
 package cli
 
-import (
-	"io"
-	"testing"
-)
-
-func TestUiWriter_impl(t *testing.T) {
-	var _ io.Writer = new(UiWriter)
-}
+import "testing"
 
 func TestUiWriter(t *testing.T) {
 	ui := new(MockUi)

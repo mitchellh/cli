@@ -14,6 +14,9 @@ type MockCommand struct {
 	RunArgs   []string
 }
 
+// Ensure MockCommand implements Command
+var _ Command = new(MockCommand)
+
 func (c *MockCommand) Help() string {
 	return c.HelpText
 }
