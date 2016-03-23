@@ -409,6 +409,15 @@ func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 				"foo bar": func() (Command, error) {
 					return &MockCommand{SynopsisText: "hi!"}, nil
 				},
+				"foo zip": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"foo zap": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"foo banana": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
 				"foo longer": func() (Command, error) {
 					return &MockCommand{SynopsisText: "hi!"}, nil
 				},
@@ -541,7 +550,10 @@ const testCommandHelpSubcommandsOutput = `donuts
 
 Subcommands:
 
+    banana    hi!
     bar       hi!
     longer    hi!
+    zap       hi!
+    zip       hi!
 
 `
