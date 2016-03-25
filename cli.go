@@ -81,7 +81,6 @@ type CLI struct {
 	commandTree    *radix.Tree
 	commandNested  bool
 	isHelp         bool
-	isPostDashes   bool
 	subcommand     string
 	subcommandArgs []string
 	topFlags       []string
@@ -389,27 +388,20 @@ func (c *CLI) helpCommands(prefix string) map[string]CommandFactory {
 func (c *CLI) processArgs() {
 	for i, arg := range c.Args {
 		if arg == "--" {
-			c.isPostDashes = true
-			continue
+			break
 		}
 
-		// Check for help flags unless we have previously seen "--", which is an
-		// indication of another command entirely, so we do not want to parse those
-		// flags.
-		if !c.isPostDashes {
-			if arg == "-h" || arg == "-help" || arg == "--help" {
-				c.isHelp = true
-				continue
-			}
+		// Check for help flags.
+		if arg == "-h" || arg == "-help" || arg == "--help" {
+			c.isHelp = true
+			continue
 		}
 
 		if c.subcommand == "" {
 			// Check for version flags if not in a subcommand.
-			if !c.isPostDashes {
-				if arg == "-v" || arg == "-version" || arg == "--version" {
-					c.isVersion = true
-					continue
-				}
+			if arg == "-v" || arg == "-version" || arg == "--version" {
+				c.isVersion = true
+				continue
 			}
 
 			if arg != "" && arg[0] == '-' {
