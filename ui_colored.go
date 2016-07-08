@@ -25,6 +25,7 @@ var (
 // to the given color schemes for the given type of output.
 type ColoredUi struct {
 	OutputColor UiColor
+	PrintColor  UiColor
 	InfoColor   UiColor
 	ErrorColor  UiColor
 	WarnColor   UiColor
@@ -41,6 +42,10 @@ func (u *ColoredUi) AskSecret(query string) (string, error) {
 
 func (u *ColoredUi) Output(message string) {
 	u.Ui.Output(u.colorize(message, u.OutputColor))
+}
+
+func (u *ColoredUi) Print(message string) {
+	u.Ui.Print(u.colorize(message, u.PrintColor))
 }
 
 func (u *ColoredUi) Info(message string) {

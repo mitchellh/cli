@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/bgentry/speakeasy"
-	"github.com/mattn/go-isatty"
+	isatty "github.com/mattn/go-isatty"
 )
 
 // Ui is an interface for interacting with the terminal, or "interface"
@@ -32,6 +32,11 @@ type Ui interface {
 	// In general this may be the exact same as Output, but this gives
 	// Ui implementors some flexibility with output formats.
 	Info(string)
+
+	// Print is called when standard output is required to not have a new line
+	// appended to the message. Useful when stringing together multiple writes
+	// to the same line
+	Print(string)
 
 	// Error is used for any error messages that might appear on standard
 	// error.
@@ -123,6 +128,10 @@ func (u *BasicUi) Output(message string) {
 	fmt.Fprint(u.Writer, "\n")
 }
 
+func (u *BasicUi) Print(message string) {
+	fmt.Fprint(u.Writer, message)
+}
+
 func (u *BasicUi) Warn(message string) {
 	u.Error(message)
 }
@@ -133,6 +142,7 @@ type PrefixedUi struct {
 	AskSecretPrefix string
 	OutputPrefix    string
 	InfoPrefix      string
+	PrintPrefix     string
 	ErrorPrefix     string
 	WarnPrefix      string
 	Ui              Ui
@@ -176,6 +186,14 @@ func (u *PrefixedUi) Output(message string) {
 	}
 
 	u.Ui.Output(message)
+}
+
+func (u *PrefixedUi) Print(message string) {
+	if message != "" {
+		message = fmt.Sprintf("%s%s", u.PrintPrefix, message)
+	}
+
+	u.Ui.Print(message)
 }
 
 func (u *PrefixedUi) Warn(message string) {
