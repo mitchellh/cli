@@ -46,11 +46,11 @@ func (u *ConcurrentUi) Output(message string) {
 	u.Ui.Output(message)
 }
 
-func (u *ConcurrentUi) Print(message string) {
+func (u *ConcurrentUi) WriteString(message string) {
 	u.l.Lock()
 	defer u.l.Unlock()
 
-	u.Ui.Print(message)
+	u.Ui.WriteString(message)
 }
 
 func (u *ConcurrentUi) Warn(message string) {

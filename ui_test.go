@@ -98,7 +98,7 @@ func TestBasicUi_Output(t *testing.T) {
 func TestBasicUi_Print(t *testing.T) {
 	writer := new(bytes.Buffer)
 	ui := &BasicUi{Writer: writer}
-	ui.Print("HELLO")
+	ui.WriteString("HELLO")
 
 	if writer.String() != "HELLO" {
 		t.Fatalf("bad: %s", writer.String())
@@ -161,11 +161,11 @@ func TestPrefixedUiOutput(t *testing.T) {
 func TestPrefixedUiPrint(t *testing.T) {
 	ui := new(MockUi)
 	p := &PrefixedUi{
-		PrintPrefix: "foo",
-		Ui:          ui,
+		StringPrefix: "foo",
+		Ui:           ui,
 	}
 
-	p.Print("bar")
+	p.WriteString("bar")
 	if ui.OutputWriter.String() != "foobar" {
 		t.Fatalf("bad: %s", ui.OutputWriter.String())
 	}

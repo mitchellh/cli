@@ -51,7 +51,7 @@ func (u *MockUi) Output(message string) {
 	fmt.Fprint(u.OutputWriter, "\n")
 }
 
-func (u *MockUi) Print(message string) {
+func (u *MockUi) WriteString(message string) {
 	u.once.Do(u.init)
 
 	fmt.Fprint(u.OutputWriter, message)

@@ -63,10 +63,10 @@ func TestColoredUi_Output(t *testing.T) {
 func TestColoredUi_Print(t *testing.T) {
 	mock := new(MockUi)
 	ui := &ColoredUi{
-		PrintColor: UiColor{Code: 33},
-		Ui:         mock,
+		StringColor: UiColor{Code: 33},
+		Ui:          mock,
 	}
-	ui.Print("foo")
+	ui.WriteString("foo")
 
 	if mock.OutputWriter.String() != "\033[0;33mfoo\033[0m" {
 		t.Fatalf("bad: %#v %#v", mock.OutputWriter.String())

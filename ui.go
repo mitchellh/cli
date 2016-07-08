@@ -33,10 +33,10 @@ type Ui interface {
 	// Ui implementors some flexibility with output formats.
 	Info(string)
 
-	// Print is called when standard output is required to not have a new line
+	// WriteString is called when standard output is required to not have a new line
 	// appended to the message. Useful when stringing together multiple writes
 	// to the same line
-	Print(string)
+	WriteString(string)
 
 	// Error is used for any error messages that might appear on standard
 	// error.
@@ -128,7 +128,7 @@ func (u *BasicUi) Output(message string) {
 	fmt.Fprint(u.Writer, "\n")
 }
 
-func (u *BasicUi) Print(message string) {
+func (u *BasicUi) WriteString(message string) {
 	fmt.Fprint(u.Writer, message)
 }
 
@@ -142,7 +142,7 @@ type PrefixedUi struct {
 	AskSecretPrefix string
 	OutputPrefix    string
 	InfoPrefix      string
-	PrintPrefix     string
+	StringPrefix    string
 	ErrorPrefix     string
 	WarnPrefix      string
 	Ui              Ui
@@ -188,12 +188,12 @@ func (u *PrefixedUi) Output(message string) {
 	u.Ui.Output(message)
 }
 
-func (u *PrefixedUi) Print(message string) {
+func (u *PrefixedUi) WriteString(message string) {
 	if message != "" {
-		message = fmt.Sprintf("%s%s", u.PrintPrefix, message)
+		message = fmt.Sprintf("%s%s", u.StringPrefix, message)
 	}
 
-	u.Ui.Print(message)
+	u.Ui.WriteString(message)
 }
 
 func (u *PrefixedUi) Warn(message string) {
