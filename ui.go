@@ -33,11 +33,6 @@ type Ui interface {
 	// Ui implementors some flexibility with output formats.
 	Info(string)
 
-	// WriteString is called when standard output is required to not have a new line
-	// appended to the message. Useful when stringing together multiple writes
-	// to the same line
-	WriteString(string)
-
 	// Error is used for any error messages that might appear on standard
 	// error.
 	Error(string)
@@ -45,6 +40,15 @@ type Ui interface {
 	// Warn is used for any warning messages that might appear on standard
 	// error.
 	Warn(string)
+}
+
+type AdvancedUi interface {
+	Ui
+
+	// WriteString is called when standard output is required to not have a new line
+	// appended to the message. Useful when stringing together multiple writes
+	// to the same line
+	WriteString(string)
 }
 
 // BasicUi is an implementation of Ui that just outputs to the given
@@ -142,7 +146,6 @@ type PrefixedUi struct {
 	AskSecretPrefix string
 	OutputPrefix    string
 	InfoPrefix      string
-	StringPrefix    string
 	ErrorPrefix     string
 	WarnPrefix      string
 	Ui              Ui
@@ -188,18 +191,30 @@ func (u *PrefixedUi) Output(message string) {
 	u.Ui.Output(message)
 }
 
-func (u *PrefixedUi) WriteString(message string) {
-	if message != "" {
-		message = fmt.Sprintf("%s%s", u.StringPrefix, message)
-	}
-
-	u.Ui.WriteString(message)
-}
-
 func (u *PrefixedUi) Warn(message string) {
 	if message != "" {
 		message = fmt.Sprintf("%s%s", u.WarnPrefix, message)
 	}
 
 	u.Ui.Warn(message)
+}
+
+// AdvancedPrefixedUi is an implementation of Ui that prefixes messages.
+type AdvancedPrefixedUi struct {
+	AskPrefix       string
+	AskSecretPrefix string
+	OutputPrefix    string
+	StringPrefix    string
+	InfoPrefix      string
+	ErrorPrefix     string
+	WarnPrefix      string
+	Ui              AdvancedUi
+}
+
+func (u *AdvancedPrefixedUi) WriteString(message string) {
+	if message != "" {
+		message = fmt.Sprintf("%s%s", u.StringPrefix, message)
+	}
+
+	u.Ui.WriteString(message)
 }

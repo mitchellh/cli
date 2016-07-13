@@ -46,16 +46,23 @@ func (u *ConcurrentUi) Output(message string) {
 	u.Ui.Output(message)
 }
 
-func (u *ConcurrentUi) WriteString(message string) {
-	u.l.Lock()
-	defer u.l.Unlock()
-
-	u.Ui.WriteString(message)
-}
-
 func (u *ConcurrentUi) Warn(message string) {
 	u.l.Lock()
 	defer u.l.Unlock()
 
 	u.Ui.Warn(message)
+}
+
+// ConcurrentUi is a wrapper around a Ui interface (and implements that
+// interface) making the underlying Ui concurrency safe.
+type AdvancedConcurrentUi struct {
+	Ui AdvancedUi
+	l  sync.Mutex
+}
+
+func (u *AdvancedConcurrentUi) WriteString(message string) {
+	u.l.Lock()
+	defer u.l.Unlock()
+
+	u.Ui.WriteString(message)
 }

@@ -62,7 +62,7 @@ func TestColoredUi_Output(t *testing.T) {
 
 func TestColoredUi_Print(t *testing.T) {
 	mock := new(MockUi)
-	ui := &ColoredUi{
+	ui := &AdvancedColoredUi{
 		StringColor: UiColor{Code: 33},
 		Ui:          mock,
 	}

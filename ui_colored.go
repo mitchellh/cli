@@ -44,10 +44,6 @@ func (u *ColoredUi) Output(message string) {
 	u.Ui.Output(u.colorize(message, u.OutputColor))
 }
 
-func (u *ColoredUi) WriteString(message string) {
-	u.Ui.WriteString(u.colorize(message, u.StringColor))
-}
-
 func (u *ColoredUi) Info(message string) {
 	u.Ui.Info(u.colorize(message, u.InfoColor))
 }
@@ -58,6 +54,20 @@ func (u *ColoredUi) Error(message string) {
 
 func (u *ColoredUi) Warn(message string) {
 	u.Ui.Warn(u.colorize(message, u.WarnColor))
+}
+
+type AdvancedColoredUi struct {
+	OutputColor UiColor
+	StringColor UiColor
+	InfoColor   UiColor
+	ErrorColor  UiColor
+	WarnColor   UiColor
+	Ui          AdvancedUi
+}
+
+func (u *AdvancedColoredUi) WriteString(message string) {
+	cUi := &ColoredUi{}
+	u.Ui.WriteString(cUi.colorize(message, u.StringColor))
 }
 
 func (u *ColoredUi) colorize(message string, color UiColor) string {

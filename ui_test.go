@@ -158,19 +158,6 @@ func TestPrefixedUiOutput(t *testing.T) {
 	}
 }
 
-func TestPrefixedUiPrint(t *testing.T) {
-	ui := new(MockUi)
-	p := &PrefixedUi{
-		StringPrefix: "foo",
-		Ui:           ui,
-	}
-
-	p.WriteString("bar")
-	if ui.OutputWriter.String() != "foobar" {
-		t.Fatalf("bad: %s", ui.OutputWriter.String())
-	}
-}
-
 func TestPrefixedUiWarn(t *testing.T) {
 	ui := new(MockUi)
 	p := &PrefixedUi{
@@ -181,5 +168,18 @@ func TestPrefixedUiWarn(t *testing.T) {
 	p.Warn("bar")
 	if ui.ErrorWriter.String() != "foobar\n" {
 		t.Fatalf("bad: %s", ui.ErrorWriter.String())
+	}
+}
+
+func TestPrefixedUiPrint(t *testing.T) {
+	ui := new(MockUi)
+	p := &AdvancedPrefixedUi{
+		StringPrefix: "foo",
+		Ui:           ui,
+	}
+
+	p.WriteString("bar")
+	if ui.OutputWriter.String() != "foobar" {
+		t.Fatalf("bad: %s", ui.OutputWriter.String())
 	}
 }
