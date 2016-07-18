@@ -212,7 +212,7 @@ type AdvancedPrefixedUi struct {
 }
 
 func (u *AdvancedPrefixedUi) WriteString(message string) {
-	if message != "" {
+	if u.StringPrefix != "" {
 		message = fmt.Sprintf("%s%s", u.StringPrefix, message)
 	}
 
