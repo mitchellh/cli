@@ -171,7 +171,7 @@ func TestAdvancedUi_Print(t *testing.T) {
 	}
 }
 
-func TestPrefixedUiPrint(t *testing.T) {
+func TestAdvancedUi_PrintPrefix(t *testing.T) {
 	ui := new(MockUi)
 	p := &AdvancedPrefixedUi{
 		StringPrefix: "foo",
