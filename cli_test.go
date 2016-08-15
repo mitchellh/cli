@@ -119,6 +119,37 @@ func TestCLIRun_blank(t *testing.T) {
 	}
 }
 
+func TestCLIRun_prefix(t *testing.T) {
+	buf := new(bytes.Buffer)
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"foobar"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+
+			"foo bar": func() (Command, error) {
+				return command, nil
+			},
+		},
+		HelpWriter: buf,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 1 {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if command.RunCalled {
+		t.Fatalf("run should not be called")
+	}
+}
+
 func TestCLIRun_default(t *testing.T) {
 	commandBar := new(MockCommand)
 	commandBar.RunResult = 42
