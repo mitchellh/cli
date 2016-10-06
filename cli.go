@@ -250,7 +250,7 @@ func (c *CLI) init() {
 		c.commandTree.Walk(walkFn)
 
 		// Insert any that we're missing
-		for k, _ := range toInsert {
+		for k := range toInsert {
 			var f CommandFactory = func() (Command, error) {
 				return &MockCommand{
 					HelpText:  "This command is accessed by using one of the subcommands below.",

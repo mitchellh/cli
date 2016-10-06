@@ -198,7 +198,7 @@ func TestCLIRun_helpNested(t *testing.T) {
 			helpCalled = true
 
 			var keys []string
-			for k, _ := range m {
+			for k := range m {
 				keys = append(keys, k)
 			}
 			sort.Strings(keys)
@@ -309,7 +309,7 @@ func TestCLIRun_printHelp(t *testing.T) {
 			},
 			HelpFunc: func(m map[string]CommandFactory) string {
 				var keys []string
-				for k, _ := range m {
+				for k := range m {
 					keys = append(keys, k)
 				}
 				sort.Strings(keys)
