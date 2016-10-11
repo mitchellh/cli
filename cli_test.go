@@ -572,19 +572,15 @@ func TestCLISubcommand_nested(t *testing.T) {
 const testCommandNestedMissingParent = `This command is accessed by using one of the subcommands below.
 
 Subcommands:
-
     bar    hi!
-
 `
 
 const testCommandHelpSubcommandsOutput = `donuts
 
 Subcommands:
-
     banana    hi!
     bar       hi!
     longer    hi!
     zap       hi!
     zip       hi!
-
 `
