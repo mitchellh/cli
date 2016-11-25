@@ -102,6 +102,34 @@ func TestCLIRun(t *testing.T) {
 	}
 }
 
+func TestCLIWithoutVersion_help(t *testing.T) {
+	command := new(MockCommand)
+	buf := new(bytes.Buffer)
+	cli := &CLI{
+		Version: "",
+		Args:    []string{"", "--version"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+		},
+		HelpWriter: buf,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode == 0 {
+		t.Error("Exit code was 0")
+	}
+
+	if strings.Contains(buf.String(), "--version") {
+		t.Error("Help text contains --version when none was set")
+	}
+}
+
 func TestCLIRun_blank(t *testing.T) {
 	command := new(MockCommand)
 	cli := &CLI{
