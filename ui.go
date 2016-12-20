@@ -27,19 +27,33 @@ type Ui interface {
 	// Output is called for normal standard output.
 	Output(string)
 
+	// Outputf calls Output with a format specifier.
+	Outputf(string, ...interface{})
+
 	// Info is called for information related to the previous output.
 	// In general this may be the exact same as Output, but this gives
 	// Ui implementors some flexibility with output formats.
 	Info(string)
 
+	// Infof calls Info with a format specifier.
+	Infof(string, ...interface{})
+
 	// Error is used for any error messages that might appear on standard
 	// error.
 	Error(string)
 
+	// Errorf calls Error with a format specifier.
+	Errorf(string, ...interface{})
+
 	// Warn is used for any warning messages that might appear on standard
 	// error.
 	Warn(string)
+
+	// Warnf calls Warn with a format specifier.
+	Warnf(string, ...interface{})
 }
+
+var _ Ui = &BasicUi{}
 
 // BasicUi is an implementation of Ui that just outputs to the given
 // writer. This UI is not threadsafe by default, but you can wrap it
@@ -116,8 +130,16 @@ func (u *BasicUi) Error(message string) {
 	fmt.Fprint(w, "\n")
 }
 
+func (u *BasicUi) Errorf(format string, a ...interface{}) {
+	u.Error(fmt.Sprintf(format, a...))
+}
+
 func (u *BasicUi) Info(message string) {
 	u.Output(message)
+}
+
+func (u *BasicUi) Infof(format string, a ...interface{}) {
+	u.Info(fmt.Sprintf(format, a...))
 }
 
 func (u *BasicUi) Output(message string) {
@@ -126,13 +148,18 @@ func (u *BasicUi) Output(message string) {
 }
 
 func (u *BasicUi) Outputf(format string, a ...interface{}) {
-	fmt.Fprintf(u.Writer, format, a...)
-	fmt.Fprintln(u.Writer)
+	u.Output(fmt.Sprintf(format, a...))
 }
 
 func (u *BasicUi) Warn(message string) {
 	u.Error(message)
 }
+
+func (u *BasicUi) Warnf(format string, a ...interface{}) {
+	u.Warn(fmt.Sprintf(format, a...))
+}
+
+var _ Ui = &PrefixedUi{}
 
 // PrefixedUi is an implementation of Ui that prefixes messages.
 type PrefixedUi struct {
@@ -169,12 +196,20 @@ func (u *PrefixedUi) Error(message string) {
 	u.Ui.Error(message)
 }
 
+func (u *PrefixedUi) Errorf(format string, a ...interface{}) {
+	u.Error(fmt.Sprintf(format, a...))
+}
+
 func (u *PrefixedUi) Info(message string) {
 	if message != "" {
 		message = fmt.Sprintf("%s%s", u.InfoPrefix, message)
 	}
 
 	u.Ui.Info(message)
+}
+
+func (u *PrefixedUi) Infof(format string, a ...interface{}) {
+	u.Info(fmt.Sprintf(format, a...))
 }
 
 func (u *PrefixedUi) Output(message string) {
@@ -185,10 +220,18 @@ func (u *PrefixedUi) Output(message string) {
 	u.Ui.Output(message)
 }
 
+func (u *PrefixedUi) Outputf(format string, a ...interface{}) {
+	u.Output(fmt.Sprintf(format, a...))
+}
+
 func (u *PrefixedUi) Warn(message string) {
 	if message != "" {
 		message = fmt.Sprintf("%s%s", u.WarnPrefix, message)
 	}
 
 	u.Ui.Warn(message)
+}
+
+func (u *PrefixedUi) Warnf(format string, a ...interface{}) {
+	u.Warn(fmt.Sprintf(format, a...))
 }
