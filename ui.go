@@ -125,6 +125,11 @@ func (u *BasicUi) Output(message string) {
 	fmt.Fprint(u.Writer, "\n")
 }
 
+func (u *BasicUi) Outputf(format string, a ...interface{}) {
+	fmt.Fprintf(u.Writer, format, a...)
+	fmt.Fprintln(u.Writer)
+}
+
 func (u *BasicUi) Warn(message string) {
 	u.Error(message)
 }
