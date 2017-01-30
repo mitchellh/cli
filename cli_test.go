@@ -230,7 +230,7 @@ func TestCLIRun_helpNested(t *testing.T) {
 		t.Fatalf("Error: %s", err)
 	}
 
-	if code != 1 {
+	if code != 0 {
 		t.Fatalf("Code: %d", code)
 	}
 
@@ -288,7 +288,7 @@ func TestCLIRun_nestedMissingParent(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	if exitCode != 1 {
+	if exitCode != 0 {
 		t.Fatalf("bad exit code: %d", exitCode)
 	}
 
@@ -298,11 +298,15 @@ func TestCLIRun_nestedMissingParent(t *testing.T) {
 }
 
 func TestCLIRun_printHelp(t *testing.T) {
-	testCases := [][]string{
-		{},
-		{"-h"},
-		{"i-dont-exist"},
-		{"-bad-flag", "foo"},
+	testCases := []struct {
+		args     []string
+		exitCode int
+	}{
+		{[]string{}, 1},
+		{[]string{"-h"}, 0},
+		{[]string{"i-dont-exist"}, 1},
+		{[]string{"-h", "i-dont-exist"}, 1},
+		{[]string{"-bad-flag", "foo"}, 1},
 	}
 
 	for _, testCase := range testCases {
@@ -310,7 +314,7 @@ func TestCLIRun_printHelp(t *testing.T) {
 		helpText := "foo"
 
 		cli := &CLI{
-			Args: testCase,
+			Args: testCase.args,
 			Commands: map[string]CommandFactory{
 				"foo": func() (Command, error) {
 					return &MockCommand{HelpText: helpText}, nil
@@ -338,12 +342,12 @@ func TestCLIRun_printHelp(t *testing.T) {
 
 		code, err := cli.Run()
 		if err != nil {
-			t.Errorf("Args: %#v. Error: %s", testCase, err)
+			t.Errorf("Args: %#v. Error: %s", testCase.args, err)
 			continue
 		}
 
-		if code != 1 {
-			t.Errorf("Args: %#v. Code: %d", testCase, code)
+		if code != testCase.exitCode {
+			t.Errorf("Args: %#v. Code: %d", testCase.args, code)
 			continue
 		}
 
@@ -384,7 +388,7 @@ func TestCLIRun_printCommandHelp(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
@@ -421,7 +425,7 @@ func TestCLIRun_printCommandHelpNested(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
@@ -476,7 +480,7 @@ func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
@@ -517,7 +521,7 @@ func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
