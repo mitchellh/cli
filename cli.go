@@ -159,7 +159,7 @@ func (c *CLI) Run() (int, error) {
 	if code == RunResultHelp {
 		// Requesting help
 		c.commandHelp(command)
-		return 0, nil
+		return 1, nil
 	}
 
 	return code, nil

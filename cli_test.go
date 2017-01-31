@@ -288,7 +288,7 @@ func TestCLIRun_nestedMissingParent(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	if exitCode != 0 {
+	if exitCode != 1 {
 		t.Fatalf("bad exit code: %d", exitCode)
 	}
 
