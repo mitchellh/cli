@@ -49,6 +49,7 @@ type BasicUi struct {
 	Reader      io.Reader
 	Writer      io.Writer
 	ErrorWriter io.Writer
+	RichReader  *bufio.Reader
 }
 
 func (u *BasicUi) Ask(query string) (string, error) {
@@ -60,6 +61,10 @@ func (u *BasicUi) AskSecret(query string) (string, error) {
 }
 
 func (u *BasicUi) ask(query string, secret bool) (string, error) {
+	if u.RichReader == nil {
+		u.RichReader = bufio.NewReader(u.Reader)
+	}
+
 	if _, err := fmt.Fprint(u.Writer, query+" "); err != nil {
 		return "", err
 	}
@@ -79,8 +84,7 @@ func (u *BasicUi) ask(query string, secret bool) (string, error) {
 		if secret && isatty.IsTerminal(os.Stdin.Fd()) {
 			line, err = speakeasy.Ask("")
 		} else {
-			r := bufio.NewReader(u.Reader)
-			line, err = r.ReadString('\n')
+			line, err = u.RichReader.ReadString('\n')
 		}
 		if err != nil {
 			errCh <- err

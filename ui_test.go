@@ -64,6 +64,42 @@ func TestBasicUi_AskSecret(t *testing.T) {
 	}
 }
 
+func TestBasicUi_Ask_And_AskSecret(t *testing.T) {
+	in_r, in_w := io.Pipe()
+	defer in_r.Close()
+	defer in_w.Close()
+
+	writer := new(bytes.Buffer)
+	ui := &BasicUi{
+		Reader: in_r,
+		Writer: writer,
+	}
+
+	go in_w.Write([]byte("foo bar\nbaz\n"))
+
+	name, err := ui.Ask("Name?")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	password, err := ui.AskSecret("Password?")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if writer.String() != "Name? Password? " {
+		t.Fatalf("bad: %#v", writer.String())
+	}
+
+	if name != "foo bar" {
+		t.Fatalf("bad: %#v", name)
+	}
+
+	if password != "baz" {
+		t.Fatalf("bad: %#v", password)
+	}
+}
+
 func TestBasicUi_Error(t *testing.T) {
 	writer := new(bytes.Buffer)
 	ui := &BasicUi{Writer: writer}
