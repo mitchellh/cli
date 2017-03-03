@@ -486,6 +486,55 @@ func TestCLIRun_printCommandHelpSubcommands(t *testing.T) {
 	}
 }
 
+func TestCLIRun_printCommandHelpSubcommandsNestedTwoLevel(t *testing.T) {
+	testCases := [][]string{
+		{"--help", "L1"},
+		{"-h", "L1"},
+	}
+
+	for _, args := range testCases {
+		command := &MockCommand{
+			HelpText: "donuts",
+		}
+
+		buf := new(bytes.Buffer)
+		cli := &CLI{
+			Args: args,
+			Commands: map[string]CommandFactory{
+				"L1": func() (Command, error) {
+					return command, nil
+				},
+				"L1 L2A": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"L1 L2B": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"L1 L2A L3A": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"L1 L2A L3B": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+			},
+			HelpWriter: buf,
+		}
+
+		exitCode, err := cli.Run()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if exitCode != 1 {
+			t.Fatalf("bad exit code: %d", exitCode)
+		}
+
+		if buf.String() != testCommandHelpSubcommandsTwoLevelOutput {
+			t.Fatalf("bad: %#v\n\n%s\n\n%s", args, buf.String(), testCommandHelpSubcommandsOutput)
+		}
+	}
+}
+
 func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
 	testCases := [][]string{
 		{"--help", "foo"},
@@ -595,4 +644,11 @@ Subcommands:
     longer    hi!
     zap       hi!
     zip       hi!
+`
+
+const testCommandHelpSubcommandsTwoLevelOutput = `donuts
+
+Subcommands:
+    L2A    hi!
+    L2B    hi!
 `
