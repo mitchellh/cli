@@ -230,7 +230,7 @@ func TestCLIRun_helpNested(t *testing.T) {
 		t.Fatalf("Error: %s", err)
 	}
 
-	if code != 1 {
+	if code != 0 {
 		t.Fatalf("Code: %d", code)
 	}
 
@@ -460,7 +460,7 @@ func TestCLIRun_printCommandHelpNested(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
@@ -564,7 +564,7 @@ func TestCLIRun_printCommandHelpSubcommandsNestedTwoLevel(t *testing.T) {
 			t.Fatalf("err: %s", err)
 		}
 
-		if exitCode != 1 {
+		if exitCode != 0 {
 			t.Fatalf("bad exit code: %d", exitCode)
 		}
 
