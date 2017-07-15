@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/armon/go-radix"
+	"github.com/posener/complete"
 )
 
 // CLI contains the state necessary to run subcommands and parse the
@@ -103,9 +104,10 @@ type CLI struct {
 	HelpWriter io.Writer
 
 	//---------------------------------------------------------------
-	// Internal fields
+	// Internal fields set automatically
 
 	once           sync.Once
+	autocomplete   *complete.Complete
 	commandTree    *radix.Tree
 	commandNested  bool
 	subcommand     string
@@ -182,6 +184,11 @@ func (c *CLI) Run() (int, error) {
 				return 1, err
 			}
 
+			return 0, nil
+		}
+
+		// If this is a autocompletion request, satisfy it
+		if c.autocomplete.Complete() {
 			return 0, nil
 		}
 	}
@@ -273,11 +280,6 @@ func (c *CLI) init() {
 		c.HelpWriter = os.Stderr
 	}
 
-	// Setup autocomplete if we have it enabled
-	if c.Autocomplete {
-		c.initAutocomplete()
-	}
-
 	// Build our command tree
 	c.commandTree = radix.New()
 	c.commandNested = false
@@ -330,6 +332,13 @@ func (c *CLI) init() {
 		}
 	}
 
+	// Setup autocomplete if we have it enabled. We have to do this after
+	// the command tree is setup so we can use the radix tree to easily find
+	// all subcommands.
+	if c.Autocomplete {
+		c.initAutocomplete()
+	}
+
 	// Process the args
 	c.processArgs()
 }
@@ -346,6 +355,65 @@ func (c *CLI) initAutocomplete() {
 	if c.autocompleteInstaller == nil {
 		c.autocompleteInstaller = &realAutocompleteInstaller{}
 	}
+
+	// Build the root command
+	cmd := c.initAutocompleteSub("")
+
+	// For the root, we add the global flags
+	cmd.GlobalFlags = map[string]complete.Predictor{
+		"-" + c.AutocompleteInstall:   complete.PredictNothing,
+		"-" + c.AutocompleteUninstall: complete.PredictNothing,
+		"-help":    complete.PredictNothing,
+		"-version": complete.PredictNothing,
+	}
+
+	c.autocomplete = complete.New(c.Name, cmd)
+}
+
+func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
+	var cmd complete.Command
+	walkFn := func(k string, raw interface{}) bool {
+		if len(prefix) > 0 {
+			// If we have a prefix, trim the prefix + 1 (for the space)
+			// Example: turns "sub one" to "one" with prefix "sub"
+			k = k[len(prefix)+1:]
+		}
+
+		// Keep track of the full key so that we can nest further if necessary
+		fullKey := k
+
+		if idx := strings.LastIndex(k, " "); idx >= 0 {
+			// If there is a space, we trim up to the space
+			k = k[:idx]
+		}
+
+		if idx := strings.LastIndex(k, " "); idx >= 0 {
+			// This catches the scenario just in case where we see "sub one"
+			// before "sub". This will let us properly setup the subcommand
+			// regardless.
+			k = k[idx+1:]
+		}
+
+		if _, ok := cmd.Sub[k]; ok {
+			// If we already tracked this subcommand then ignore
+			return false
+		}
+
+		if cmd.Sub == nil {
+			cmd.Sub = complete.Commands(make(map[string]complete.Command))
+		}
+		cmd.Sub[k] = c.initAutocompleteSub(fullKey)
+
+		return false
+	}
+
+	walkPrefix := prefix
+	if walkPrefix != "" {
+		walkPrefix += " "
+	}
+
+	c.commandTree.WalkPrefix(walkPrefix, walkFn)
+	return cmd
 }
 
 func (c *CLI) commandHelp(command Command) {

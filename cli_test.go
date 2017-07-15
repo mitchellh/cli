@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/posener/complete"
 )
 
 func TestCLIIsHelp(t *testing.T) {
@@ -713,6 +715,61 @@ func TestCLIRun_autocompleteUninstall(t *testing.T) {
 
 	if !installer.UninstallCalled {
 		t.Fatal("should call uninstall")
+	}
+}
+
+func TestCLIAutocomplete_root(t *testing.T) {
+	cases := []struct {
+		Completed []string
+		Last      string
+		Expected  []string
+	}{
+		{nil, "-v", []string{"-version"}},
+		{nil, "-h", []string{"-help"}},
+		{nil, "-a", []string{
+			"-" + defaultAutocompleteInstall,
+			"-" + defaultAutocompleteUninstall,
+		}},
+
+		{nil, "f", []string{"foo"}},
+		{nil, "n", []string{"nodes", "noodles"}},
+		{nil, "noo", []string{"noodles"}},
+		{nil, "su", []string{"sub"}},
+
+		// Make sure global flags work on subcommands
+		{[]string{"sub"}, "-v", []string{"-version"}},
+		{[]string{"sub"}, "o", []string{"one"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Last, func(t *testing.T) {
+			command := new(MockCommand)
+			cli := &CLI{
+				Commands: map[string]CommandFactory{
+					"foo":     func() (Command, error) { return command, nil },
+					"nodes":   func() (Command, error) { return command, nil },
+					"noodles": func() (Command, error) { return command, nil },
+					"sub one": func() (Command, error) { return command, nil },
+					"sub two": func() (Command, error) { return command, nil },
+				},
+
+				Autocomplete: true,
+			}
+
+			// Initialize
+			cli.init()
+
+			// Test the autocompleter
+			actual := cli.autocomplete.Command.Predict(complete.Args{
+				Completed: tc.Completed,
+				Last:      tc.Last,
+			})
+			sort.Strings(actual)
+
+			if !reflect.DeepEqual(actual, tc.Expected) {
+				t.Fatalf("bad prediction: %#v", actual)
+			}
+		})
 	}
 }
 
