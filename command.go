@@ -26,6 +26,12 @@ type Command interface {
 	Synopsis() string
 }
 
+// CommandAutocomplete is an extension of Command that enables fine-grained
+// autocompletion. Subcommand autocompletion will work even if this interface
+// is not implemented. By implementing this interface, more advanced
+// autocompletion is enabled.
+type CommandAutocomplete interface{}
+
 // CommandHelpTemplate is an extension of Command that also has a function
 // for returning a template for the help rather than the help itself. In
 // this scenario, both Help and HelpTemplate should be implemented.

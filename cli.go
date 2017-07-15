@@ -66,6 +66,30 @@ type CLI struct {
 	// Version of the CLI.
 	Version string
 
+	// Autocomplete enables or disables subcommand auto-completion support.
+	// This is enabled by default when NewCLI is called. Otherwise, this
+	// must enabled explicitly.
+	//
+	// Autocompletion is supported via the github.com/posener/complete
+	// library. This library supports both bash and zsh. To add support
+	// for other shells, please see that library.
+	//
+	// AutocompleteInstall and AutocompleteUninstall are the global flag
+	// names for installing and uninstalling the autocompletion handlers
+	// for the user's shell. The flag should omit the hyphen(s) in front of
+	// the value. Both single and double hyphens will automatically be supported
+	// for the flag name. These default to `autocomplete-install` and
+	// `autocomplete-uninstall` respectively.
+	//
+	// AutocompleteUi is the Ui to use for confirmation to install/uninstall
+	// the autocompletion handler. If this is nil, then no confirmation
+	// will be prompted.
+	Autocomplete          bool
+	AutocompleteInstall   string
+	AutocompleteUninstall string
+	AutocompleteUi        Ui
+	autocompleteInstaller autocompleteInstaller // For tests
+
 	// HelpFunc and HelpWriter are used to output help information, if
 	// requested.
 	//
@@ -78,15 +102,22 @@ type CLI struct {
 	HelpFunc   HelpFunc
 	HelpWriter io.Writer
 
+	//---------------------------------------------------------------
+	// Internal fields
+
 	once           sync.Once
 	commandTree    *radix.Tree
 	commandNested  bool
-	isHelp         bool
 	subcommand     string
 	subcommandArgs []string
 	topFlags       []string
 
-	isVersion bool
+	// These are true when special global flags are set. We can/should
+	// probably use a bitset for this one day.
+	isHelp                  bool
+	isVersion               bool
+	isAutocompleteInstall   bool
+	isAutocompleteUninstall bool
 }
 
 // NewClI returns a new CLI instance with sensible defaults.
@@ -127,6 +158,32 @@ func (c *CLI) Run() (int, error) {
 	if c.IsHelp() && c.Subcommand() == "" {
 		c.HelpWriter.Write([]byte(c.HelpFunc(c.Commands) + "\n"))
 		return 0, nil
+	}
+
+	// If we're attempting to install or uninstall autocomplete then handle
+	if c.Autocomplete {
+		// If both install and uninstall flags are specified, then error
+		if c.isAutocompleteInstall && c.isAutocompleteUninstall {
+			// TODO: Write error message
+			return 1, nil
+		}
+
+		// If the install flag is specified, perform the install or uninstall
+		if c.isAutocompleteInstall {
+			if err := c.autocompleteInstaller.Install(c.Name); err != nil {
+				return 1, err
+			}
+
+			return 0, nil
+		}
+
+		if c.isAutocompleteUninstall {
+			if err := c.autocompleteInstaller.Uninstall(c.Name); err != nil {
+				return 1, err
+			}
+
+			return 0, nil
+		}
 	}
 
 	// Attempt to get the factory function for creating the command
@@ -216,6 +273,11 @@ func (c *CLI) init() {
 		c.HelpWriter = os.Stderr
 	}
 
+	// Setup autocomplete if we have it enabled
+	if c.Autocomplete {
+		c.initAutocomplete()
+	}
+
 	// Build our command tree
 	c.commandTree = radix.New()
 	c.commandNested = false
@@ -270,6 +332,20 @@ func (c *CLI) init() {
 
 	// Process the args
 	c.processArgs()
+}
+
+func (c *CLI) initAutocomplete() {
+	if c.AutocompleteInstall == "" {
+		c.AutocompleteInstall = defaultAutocompleteInstall
+	}
+
+	if c.AutocompleteUninstall == "" {
+		c.AutocompleteUninstall = defaultAutocompleteUninstall
+	}
+
+	if c.autocompleteInstaller == nil {
+		c.autocompleteInstaller = &realAutocompleteInstaller{}
+	}
 }
 
 func (c *CLI) commandHelp(command Command) {
@@ -404,6 +480,19 @@ func (c *CLI) processArgs() {
 			continue
 		}
 
+		// Check for autocomplete flags
+		if c.Autocomplete {
+			if arg == "-"+c.AutocompleteInstall || arg == "--"+c.AutocompleteInstall {
+				c.isAutocompleteInstall = true
+				continue
+			}
+
+			if arg == "-"+c.AutocompleteUninstall || arg == "--"+c.AutocompleteUninstall {
+				c.isAutocompleteUninstall = true
+				continue
+			}
+		}
+
 		if c.subcommand == "" {
 			// Check for version flags if not in a subcommand.
 			if arg == "-v" || arg == "-version" || arg == "--version" {
@@ -455,6 +544,11 @@ func (c *CLI) processArgs() {
 		}
 	}
 }
+
+// defaultAutocompleteInstall and defaultAutocompleteUninstall are the
+// default values for the autocomplete install and uninstall flags.
+const defaultAutocompleteInstall = "autocomplete-install"
+const defaultAutocompleteUninstall = "autocomplete-uninstall"
 
 const defaultHelpTemplate = `
 {{.Help}}{{if gt (len .Subcommands) 0}}

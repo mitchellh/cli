@@ -615,6 +615,107 @@ func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
 	}
 }
 
+func TestCLIRun_autocompleteBoth(t *testing.T) {
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{
+			"-" + defaultAutocompleteInstall,
+			"-" + defaultAutocompleteUninstall,
+		},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+		},
+
+		Autocomplete:          true,
+		autocompleteInstaller: &mockAutocompleteInstaller{},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 1 {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if command.RunCalled {
+		t.Fatalf("run should not be called")
+	}
+}
+
+func TestCLIRun_autocompleteInstall(t *testing.T) {
+	command := new(MockCommand)
+	installer := new(mockAutocompleteInstaller)
+	cli := &CLI{
+		Args: []string{
+			"-" + defaultAutocompleteInstall,
+		},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+		},
+
+		Autocomplete:          true,
+		autocompleteInstaller: installer,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 0 {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if command.RunCalled {
+		t.Fatalf("run should not be called")
+	}
+
+	if !installer.InstallCalled {
+		t.Fatal("should call install")
+	}
+}
+
+func TestCLIRun_autocompleteUninstall(t *testing.T) {
+	command := new(MockCommand)
+	installer := new(mockAutocompleteInstaller)
+	cli := &CLI{
+		Args: []string{
+			"-" + defaultAutocompleteUninstall,
+		},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+		},
+
+		Autocomplete:          true,
+		autocompleteInstaller: installer,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 0 {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if command.RunCalled {
+		t.Fatalf("run should not be called")
+	}
+
+	if !installer.UninstallCalled {
+		t.Fatal("should call uninstall")
+	}
+}
+
 func TestCLISubcommand(t *testing.T) {
 	testCases := []struct {
 		args       []string
