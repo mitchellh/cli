@@ -91,7 +91,6 @@ type CLI struct {
 	Autocomplete          bool
 	AutocompleteInstall   string
 	AutocompleteUninstall string
-	AutocompleteUi        Ui
 	autocompleteInstaller autocompleteInstaller // For tests
 
 	// HelpFunc and HelpWriter are used to output help information, if
