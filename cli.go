@@ -71,6 +71,9 @@ type CLI struct {
 	// This is enabled by default when NewCLI is called. Otherwise, this
 	// must enabled explicitly.
 	//
+	// Autocomplete requires the "Name" option to be set on CLI. This name
+	// should be set exactly to the binary name that is autocompleted.
+	//
 	// Autocompletion is supported via the github.com/posener/complete
 	// library. This library supports both bash and zsh. To add support
 	// for other shells, please see that library.
@@ -164,6 +167,13 @@ func (c *CLI) Run() (int, error) {
 
 	// If we're attempting to install or uninstall autocomplete then handle
 	if c.Autocomplete {
+		// Autocomplete requires the "Name" to be set so that we know what
+		// command to setup the autocomplete on.
+		if c.Name == "" {
+			return 1, fmt.Errorf(
+				"internal error: CLI.Name must be specified for autocomplete to work")
+		}
+
 		// If both install and uninstall flags are specified, then error
 		if c.isAutocompleteInstall && c.isAutocompleteUninstall {
 			// TODO: Write error message

@@ -630,6 +630,7 @@ func TestCLIRun_autocompleteBoth(t *testing.T) {
 			},
 		},
 
+		Name:                  "foo",
 		Autocomplete:          true,
 		autocompleteInstaller: &mockAutocompleteInstaller{},
 	}
@@ -661,6 +662,7 @@ func TestCLIRun_autocompleteInstall(t *testing.T) {
 			},
 		},
 
+		Name:                  "foo",
 		Autocomplete:          true,
 		autocompleteInstaller: installer,
 	}
@@ -696,6 +698,7 @@ func TestCLIRun_autocompleteUninstall(t *testing.T) {
 			},
 		},
 
+		Name:                  "foo",
 		Autocomplete:          true,
 		autocompleteInstaller: installer,
 	}
@@ -715,6 +718,35 @@ func TestCLIRun_autocompleteUninstall(t *testing.T) {
 
 	if !installer.UninstallCalled {
 		t.Fatal("should call uninstall")
+	}
+}
+
+func TestCLIRun_autocompleteNoName(t *testing.T) {
+	command := new(MockCommand)
+	installer := new(mockAutocompleteInstaller)
+	cli := &CLI{
+		Args: []string{"foo"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+		},
+
+		Autocomplete:          true,
+		autocompleteInstaller: installer,
+	}
+
+	exitCode, err := cli.Run()
+	if err == nil {
+		t.Fatal("should error")
+	}
+
+	if exitCode != 1 {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if command.RunCalled {
+		t.Fatalf("run should not be called")
 	}
 }
 
