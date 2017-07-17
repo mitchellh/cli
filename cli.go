@@ -85,13 +85,13 @@ type CLI struct {
 	// for the flag name. These default to `autocomplete-install` and
 	// `autocomplete-uninstall` respectively.
 	//
-	// AutocompleteUi is the Ui to use for confirmation to install/uninstall
-	// the autocompletion handler. If this is nil, then no confirmation
-	// will be prompted.
-	Autocomplete          bool
-	AutocompleteInstall   string
-	AutocompleteUninstall string
-	autocompleteInstaller autocompleteInstaller // For tests
+	// AutocompleteGlobalFlags are a mapping of global flags for
+	// autocompletion. The help and version flags are automatically added.
+	Autocomplete            bool
+	AutocompleteInstall     string
+	AutocompleteUninstall   string
+	AutocompleteGlobalFlags complete.Flags
+	autocompleteInstaller   autocompleteInstaller // For tests
 
 	// HelpFunc and HelpWriter are used to output help information, if
 	// requested.
@@ -374,6 +374,9 @@ func (c *CLI) initAutocomplete() {
 		"-" + c.AutocompleteUninstall: complete.PredictNothing,
 		"-help":    complete.PredictNothing,
 		"-version": complete.PredictNothing,
+	}
+	for k, v := range c.AutocompleteGlobalFlags {
+		cmd.GlobalFlags[k] = v
 	}
 
 	c.autocomplete = complete.New(c.Name, cmd)
