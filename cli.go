@@ -411,8 +411,24 @@ func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 		if cmd.Sub == nil {
 			cmd.Sub = complete.Commands(make(map[string]complete.Command))
 		}
-		cmd.Sub[k] = c.initAutocompleteSub(fullKey)
+		subCmd := c.initAutocompleteSub(fullKey)
 
+		// Instantiate the command so that we can check if the command is
+		// a CommandAutocomplete implementation. If there is an error
+		// creating the command, we just ignore it since that will be caught
+		// later.
+		impl, err := raw.(CommandFactory)()
+		if err != nil {
+			impl = nil
+		}
+
+		// Check if it implements ComandAutocomplete. If so, setup the autocomplete
+		if c, ok := impl.(CommandAutocomplete); ok {
+			subCmd.Args = c.AutocompleteArgs()
+			subCmd.Flags = c.AutocompleteFlags()
+		}
+
+		cmd.Sub[k] = subCmd
 		return false
 	}
 

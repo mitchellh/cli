@@ -805,6 +805,54 @@ func TestCLIAutocomplete_root(t *testing.T) {
 	}
 }
 
+func TestCLIAutocomplete_subcommandArgs(t *testing.T) {
+	cases := []struct {
+		Completed []string
+		Last      string
+		Expected  []string
+	}{
+		{[]string{"foo"}, "RE", []string{"README.md"}},
+		{[]string{"foo", "-go"}, "asdf", []string{"yo"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Last, func(t *testing.T) {
+			command := new(MockCommandAutocomplete)
+			command.AutocompleteArgsValue = complete.PredictFiles("*")
+			command.AutocompleteFlagsValue = map[string]complete.Predictor{
+				"-go": complete.PredictFunc(func(complete.Args) []string {
+					return []string{"yo"}
+				}),
+			}
+
+			cli := &CLI{
+				Commands: map[string]CommandFactory{
+					"foo": func() (Command, error) {
+						return command, nil
+					},
+				},
+
+				Autocomplete: true,
+			}
+
+			// Initialize
+			cli.init()
+
+			// Test the autocompleter
+			actual := cli.autocomplete.Command.Predict(complete.Args{
+				Completed:     tc.Completed,
+				Last:          tc.Last,
+				LastCompleted: tc.Completed[len(tc.Completed)-1],
+			})
+			sort.Strings(actual)
+
+			if !reflect.DeepEqual(actual, tc.Expected) {
+				t.Fatalf("bad prediction: %#v", actual)
+			}
+		})
+	}
+}
+
 func TestCLISubcommand(t *testing.T) {
 	testCases := []struct {
 		args       []string
