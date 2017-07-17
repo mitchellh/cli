@@ -127,9 +127,10 @@ type CLI struct {
 // NewClI returns a new CLI instance with sensible defaults.
 func NewCLI(app, version string) *CLI {
 	return &CLI{
-		Name:     app,
-		Version:  version,
-		HelpFunc: BasicHelpFunc(app),
+		Name:         app,
+		Version:      version,
+		HelpFunc:     BasicHelpFunc(app),
+		Autocomplete: true,
 	}
 
 }
