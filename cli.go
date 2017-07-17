@@ -176,8 +176,9 @@ func (c *CLI) Run() (int, error) {
 
 		// If both install and uninstall flags are specified, then error
 		if c.isAutocompleteInstall && c.isAutocompleteUninstall {
-			// TODO: Write error message
-			return 1, nil
+			return 1, fmt.Errorf(
+				"Either the autocomplete install or uninstall flag may " +
+					"be specified, but not both.")
 		}
 
 		// If the install flag is specified, perform the install or uninstall
@@ -383,6 +384,9 @@ func (c *CLI) initAutocomplete() {
 	c.autocomplete = complete.New(c.Name, cmd)
 }
 
+// initAutocompleteSub creates the complete.Command for a subcommand with
+// the given prefix. This will continue recursively for all subcommands.
+// The prefix "" (empty string) can be used for the root command.
 func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 	var cmd complete.Command
 	walkFn := func(k string, raw interface{}) bool {

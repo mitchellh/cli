@@ -636,8 +636,8 @@ func TestCLIRun_autocompleteBoth(t *testing.T) {
 	}
 
 	exitCode, err := cli.Run()
-	if err != nil {
-		t.Fatalf("err: %s", err)
+	if err == nil {
+		t.Fatal("should error")
 	}
 
 	if exitCode != 1 {

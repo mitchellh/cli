@@ -4,7 +4,7 @@ import (
 	"github.com/posener/complete/cmd/install"
 )
 
-// autocompleteInstaller is an interface to be implemented to peform the
+// autocompleteInstaller is an interface to be implemented to perform the
 // autocomplete installation and uninstallation with a CLI.
 //
 // This interface is not exported because it only exists for unit tests
