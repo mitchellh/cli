@@ -370,16 +370,15 @@ func (c *CLI) initAutocomplete() {
 	// Build the root command
 	cmd := c.initAutocompleteSub("")
 
-	// For the root, we add the global flags
-	cmd.GlobalFlags = map[string]complete.Predictor{
+	// For the root, we add the global flags to the "Flags". This way
+	// they don't show up on every command.
+	cmd.Flags = map[string]complete.Predictor{
 		"-" + c.AutocompleteInstall:   complete.PredictNothing,
 		"-" + c.AutocompleteUninstall: complete.PredictNothing,
 		"-help":    complete.PredictNothing,
 		"-version": complete.PredictNothing,
 	}
-	for k, v := range c.AutocompleteGlobalFlags {
-		cmd.GlobalFlags[k] = v
-	}
+	cmd.GlobalFlags = c.AutocompleteGlobalFlags
 
 	c.autocomplete = complete.New(c.Name, cmd)
 }

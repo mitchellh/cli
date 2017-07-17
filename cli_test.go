@@ -769,7 +769,7 @@ func TestCLIAutocomplete_root(t *testing.T) {
 		{nil, "su", []string{"sub"}},
 
 		// Make sure global flags work on subcommands
-		{[]string{"sub"}, "-v", []string{"-version"}},
+		{[]string{"sub"}, "-v", nil},
 		{[]string{"sub"}, "o", []string{"one"}},
 	}
 
