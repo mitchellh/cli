@@ -1038,7 +1038,7 @@ func TestCLISubcommand_nested(t *testing.T) {
 // pressed in a shell to autocomplete a command.
 func testAutocomplete(t *testing.T, input string) func() {
 	// This env var is used to trigger autocomplete
-	os.Setenv(envComplete, "foo -autocomplete-install")
+	os.Setenv(envComplete, input)
 
 	// Change stdout/stderr since the autocompleter writes directly to them.
 	oldStdout := os.Stdout
