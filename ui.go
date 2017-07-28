@@ -21,25 +21,49 @@ type Ui interface {
 	// returned as the given string, or an error.
 	Ask(string) (string, error)
 
+	// Askf is the same as Ask, but accepts a formatting string and list of
+	// arguments like Sprintf.
+	Askf(string, ...interface{}) (string, error)
+
 	// AskSecret asks the user for input using the given query, but does not echo
 	// the keystrokes to the terminal.
 	AskSecret(string) (string, error)
 
+	// AskSecretf is the same as AskSecret, but accepts a formatting string and
+	// list of arguments like Sprintf.
+	AskSecretf(string, ...interface{}) (string, error)
+
 	// Output is called for normal standard output.
 	Output(string)
+
+	// Outputf is the same as Output, but accepts a formatting string and list of
+	// arguments like Sprintf.
+	Outputf(string, ...interface{})
 
 	// Info is called for information related to the previous output.
 	// In general this may be the exact same as Output, but this gives
 	// Ui implementors some flexibility with output formats.
 	Info(string)
 
+	// Infof is the same as Info, but accepts a formatting string and list of
+	// arguments like Sprintf.
+	Infof(string, ...interface{})
+
 	// Error is used for any error messages that might appear on standard
 	// error.
 	Error(string)
 
+	// Errorf is the same as Error, but accepts a formatting string and list of
+	// arguments like Sprintf.
+	Errorf(string, ...interface{})
+
 	// Warn is used for any warning messages that might appear on standard
 	// error.
 	Warn(string)
+
+	// Warnf is the same as Warn, but accepts a formatting string and list of
+	// arguments like Sprintf.
+	Warnf(string, ...interface{})
 }
 
 // BasicUi is an implementation of Ui that just outputs to the given
@@ -51,12 +75,23 @@ type BasicUi struct {
 	ErrorWriter io.Writer
 }
 
+// Ensure BasicUi implements Ui.
+var _ Ui = new(BasicUi)
+
 func (u *BasicUi) Ask(query string) (string, error) {
 	return u.ask(query, false)
 }
 
+func (u *BasicUi) Askf(f string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(f, v...))
+}
+
 func (u *BasicUi) AskSecret(query string) (string, error) {
 	return u.ask(query, true)
+}
+
+func (u *BasicUi) AskSecretf(f string, v ...interface{}) (string, error) {
+	return u.AskSecret(fmt.Sprintf(f, v...))
 }
 
 func (u *BasicUi) ask(query string, secret bool) (string, error) {
@@ -114,8 +149,16 @@ func (u *BasicUi) Error(message string) {
 	fmt.Fprint(w, "\n")
 }
 
+func (u *BasicUi) Errorf(f string, v ...interface{}) {
+	u.Error(fmt.Sprintf(f, v...))
+}
+
 func (u *BasicUi) Info(message string) {
 	u.Output(message)
+}
+
+func (u *BasicUi) Infof(f string, v ...interface{}) {
+	u.Info(fmt.Sprintf(f, v...))
 }
 
 func (u *BasicUi) Output(message string) {
@@ -123,8 +166,16 @@ func (u *BasicUi) Output(message string) {
 	fmt.Fprint(u.Writer, "\n")
 }
 
+func (u *BasicUi) Outputf(f string, v ...interface{}) {
+	u.Output(fmt.Sprintf(f, v...))
+}
+
 func (u *BasicUi) Warn(message string) {
 	u.Error(message)
+}
+
+func (u *BasicUi) Warnf(f string, v ...interface{}) {
+	u.Warn(fmt.Sprintf(f, v...))
 }
 
 // PrefixedUi is an implementation of Ui that prefixes messages.
@@ -138,12 +189,19 @@ type PrefixedUi struct {
 	Ui              Ui
 }
 
+// Ensure PrefixedUi implements Ui.
+var _ Ui = new(PrefixedUi)
+
 func (u *PrefixedUi) Ask(query string) (string, error) {
 	if query != "" {
 		query = fmt.Sprintf("%s%s", u.AskPrefix, query)
 	}
 
 	return u.Ui.Ask(query)
+}
+
+func (u *PrefixedUi) Askf(f string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(f, v...))
 }
 
 func (u *PrefixedUi) AskSecret(query string) (string, error) {
@@ -154,12 +212,20 @@ func (u *PrefixedUi) AskSecret(query string) (string, error) {
 	return u.Ui.AskSecret(query)
 }
 
+func (u *PrefixedUi) AskSecretf(f string, v ...interface{}) (string, error) {
+	return u.AskSecret(fmt.Sprintf(f, v...))
+}
+
 func (u *PrefixedUi) Error(message string) {
 	if message != "" {
 		message = fmt.Sprintf("%s%s", u.ErrorPrefix, message)
 	}
 
 	u.Ui.Error(message)
+}
+
+func (u *PrefixedUi) Errorf(f string, v ...interface{}) {
+	u.Error(fmt.Sprintf(f, v...))
 }
 
 func (u *PrefixedUi) Info(message string) {
@@ -170,6 +236,10 @@ func (u *PrefixedUi) Info(message string) {
 	u.Ui.Info(message)
 }
 
+func (u *PrefixedUi) Infof(f string, v ...interface{}) {
+	u.Info(fmt.Sprintf(f, v...))
+}
+
 func (u *PrefixedUi) Output(message string) {
 	if message != "" {
 		message = fmt.Sprintf("%s%s", u.OutputPrefix, message)
@@ -178,10 +248,18 @@ func (u *PrefixedUi) Output(message string) {
 	u.Ui.Output(message)
 }
 
+func (u *PrefixedUi) Outputf(f string, v ...interface{}) {
+	u.Output(fmt.Sprintf(f, v...))
+}
+
 func (u *PrefixedUi) Warn(message string) {
 	if message != "" {
 		message = fmt.Sprintf("%s%s", u.WarnPrefix, message)
 	}
 
 	u.Ui.Warn(message)
+}
+
+func (u *PrefixedUi) Warnf(f string, v ...interface{}) {
+	u.Warn(fmt.Sprintf(f, v...))
 }

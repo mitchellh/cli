@@ -30,6 +30,9 @@ type MockUi struct {
 	once sync.Once
 }
 
+// Ensure MockUi implements Ui.
+var _ Ui = new(MockUi)
+
 func (u *MockUi) Ask(query string) (string, error) {
 	u.once.Do(u.init)
 
@@ -42,8 +45,16 @@ func (u *MockUi) Ask(query string) (string, error) {
 	return result, nil
 }
 
+func (u *MockUi) Askf(f string, v ...interface{}) (string, error) {
+	return u.Ask(fmt.Sprintf(f, v...))
+}
+
 func (u *MockUi) AskSecret(query string) (string, error) {
 	return u.Ask(query)
+}
+
+func (u *MockUi) AskSecretf(f string, v ...interface{}) (string, error) {
+	return u.AskSecret(fmt.Sprintf(f, v...))
 }
 
 func (u *MockUi) Error(message string) {
@@ -53,8 +64,16 @@ func (u *MockUi) Error(message string) {
 	fmt.Fprint(u.ErrorWriter, "\n")
 }
 
+func (u *MockUi) Errorf(f string, v ...interface{}) {
+	u.Error(fmt.Sprintf(f, v...))
+}
+
 func (u *MockUi) Info(message string) {
 	u.Output(message)
+}
+
+func (u *MockUi) Infof(f string, v ...interface{}) {
+	u.Info(fmt.Sprintf(f, v...))
 }
 
 func (u *MockUi) Output(message string) {
@@ -64,11 +83,19 @@ func (u *MockUi) Output(message string) {
 	fmt.Fprint(u.OutputWriter, "\n")
 }
 
+func (u *MockUi) Outputf(f string, v ...interface{}) {
+	u.Output(fmt.Sprintf(f, v...))
+}
+
 func (u *MockUi) Warn(message string) {
 	u.once.Do(u.init)
 
 	fmt.Fprint(u.ErrorWriter, message)
 	fmt.Fprint(u.ErrorWriter, "\n")
+}
+
+func (u *MockUi) Warnf(f string, v ...interface{}) {
+	u.Warn(fmt.Sprintf(f, v...))
 }
 
 func (u *MockUi) init() {
