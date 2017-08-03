@@ -43,7 +43,7 @@ func TestColoredUi_Info(t *testing.T) {
 	ui.Info("foo")
 
 	if mock.OutputWriter.String() != "\033[0;33mfoo\033[0m\n" {
-		t.Fatalf("bad: %#v %#v", mock.OutputWriter.String())
+		t.Fatalf("bad: %#v", mock.OutputWriter.String())
 	}
 }
 
@@ -56,7 +56,7 @@ func TestColoredUi_Output(t *testing.T) {
 	ui.Output("foo")
 
 	if mock.OutputWriter.String() != "\033[0;33mfoo\033[0m\n" {
-		t.Fatalf("bad: %#v %#v", mock.OutputWriter.String())
+		t.Fatalf("bad: %#v", mock.OutputWriter.String())
 	}
 }
 
@@ -69,6 +69,6 @@ func TestColoredUi_Warn(t *testing.T) {
 	ui.Warn("foo")
 
 	if mock.ErrorWriter.String() != "\033[0;33mfoo\033[0m\n" {
-		t.Fatalf("bad: %#v %#v", mock.ErrorWriter.String())
+		t.Fatalf("bad: %#v", mock.ErrorWriter.String())
 	}
 }
