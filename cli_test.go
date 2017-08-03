@@ -932,6 +932,50 @@ func TestCLIAutocomplete_rootGlobalFlags(t *testing.T) {
 	}
 }
 
+func TestCLIAutocomplete_rootDisableDefaultFlags(t *testing.T) {
+	cases := []struct {
+		Completed []string
+		Last      string
+		Expected  []string
+	}{
+		{nil, "-v", nil},
+		{nil, "-h", nil},
+		{nil, "-auto", nil},
+		{nil, "-t", []string{"-tubes"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Last, func(t *testing.T) {
+			command := new(MockCommand)
+			cli := &CLI{
+				Commands: map[string]CommandFactory{
+					"foo": func() (Command, error) { return command, nil },
+				},
+
+				Autocomplete:               true,
+				AutocompleteNoDefaultFlags: true,
+				AutocompleteGlobalFlags: map[string]complete.Predictor{
+					"-tubes": complete.PredictNothing,
+				},
+			}
+
+			// Initialize
+			cli.init()
+
+			// Test the autocompleter
+			actual := cli.autocomplete.Command.Predict(complete.Args{
+				Completed: tc.Completed,
+				Last:      tc.Last,
+			})
+			sort.Strings(actual)
+
+			if !reflect.DeepEqual(actual, tc.Expected) {
+				t.Fatalf("bad prediction: %#v", actual)
+			}
+		})
+	}
+}
+
 func TestCLIAutocomplete_subcommandArgs(t *testing.T) {
 	cases := []struct {
 		Completed []string
