@@ -857,6 +857,9 @@ func TestCLIAutocomplete_root(t *testing.T) {
 		// Make sure global flags work on subcommands
 		{[]string{"sub"}, "-v", nil},
 		{[]string{"sub"}, "o", []string{"one"}},
+		{[]string{"sub"}, "su", []string{"sub2"}},
+		{[]string{"sub", "sub2"}, "o", []string{"one"}},
+		{[]string{"deep", "deep2"}, "a", []string{"a1"}},
 	}
 
 	for _, tc := range cases {
@@ -864,11 +867,15 @@ func TestCLIAutocomplete_root(t *testing.T) {
 			command := new(MockCommand)
 			cli := &CLI{
 				Commands: map[string]CommandFactory{
-					"foo":     func() (Command, error) { return command, nil },
-					"nodes":   func() (Command, error) { return command, nil },
-					"noodles": func() (Command, error) { return command, nil },
-					"sub one": func() (Command, error) { return command, nil },
-					"sub two": func() (Command, error) { return command, nil },
+					"foo":           func() (Command, error) { return command, nil },
+					"nodes":         func() (Command, error) { return command, nil },
+					"noodles":       func() (Command, error) { return command, nil },
+					"sub one":       func() (Command, error) { return command, nil },
+					"sub two":       func() (Command, error) { return command, nil },
+					"sub sub2 one":  func() (Command, error) { return command, nil },
+					"sub sub2 two":  func() (Command, error) { return command, nil },
+					"deep deep2 a1": func() (Command, error) { return command, nil },
+					"deep deep2 b2": func() (Command, error) { return command, nil },
 				},
 
 				Autocomplete: true,
@@ -877,8 +884,14 @@ func TestCLIAutocomplete_root(t *testing.T) {
 			// Initialize
 			cli.init()
 
+			// Build All value
+			var all []string
+			all = append(all, tc.Completed...)
+			all = append(all, tc.Last)
+
 			// Test the autocompleter
 			actual := cli.autocomplete.Command.Predict(complete.Args{
+				All:       all,
 				Completed: tc.Completed,
 				Last:      tc.Last,
 			})

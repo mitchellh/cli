@@ -398,25 +398,20 @@ func (c *CLI) initAutocomplete() {
 func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 	var cmd complete.Command
 	walkFn := func(k string, raw interface{}) bool {
+		// Keep track of the full key so that we can nest further if necessary
+		fullKey := k
+
 		if len(prefix) > 0 {
 			// If we have a prefix, trim the prefix + 1 (for the space)
 			// Example: turns "sub one" to "one" with prefix "sub"
 			k = k[len(prefix)+1:]
 		}
 
-		// Keep track of the full key so that we can nest further if necessary
-		fullKey := k
-
-		if idx := strings.LastIndex(k, " "); idx >= 0 {
-			// If there is a space, we trim up to the space
+		if idx := strings.Index(k, " "); idx >= 0 {
+			// If there is a space, we trim up to the space. This turns
+			// "sub sub2 sub3" into "sub". The prefix trim above will
+			// trim our current depth properly.
 			k = k[:idx]
-		}
-
-		if idx := strings.LastIndex(k, " "); idx >= 0 {
-			// This catches the scenario just in case where we see "sub one"
-			// before "sub". This will let us properly setup the subcommand
-			// regardless.
-			k = k[idx+1:]
 		}
 
 		if _, ok := cmd.Sub[k]; ok {
