@@ -582,6 +582,56 @@ func TestCLIRun_printCommandHelpSubcommandsNestedTwoLevel(t *testing.T) {
 	}
 }
 
+// Test that the root help only prints the root level.
+func TestCLIRun_printHelpRootSubcommands(t *testing.T) {
+	testCases := [][]string{
+		{"--help"},
+		{"-h"},
+	}
+
+	for _, args := range testCases {
+		buf := new(bytes.Buffer)
+		cli := &CLI{
+			Args: args,
+			Commands: map[string]CommandFactory{
+				"bar": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"foo": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"foo bar": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+				"foo zip": func() (Command, error) {
+					return &MockCommand{SynopsisText: "hi!"}, nil
+				},
+			},
+			HelpWriter: buf,
+		}
+
+		exitCode, err := cli.Run()
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+
+		if exitCode != 0 {
+			t.Fatalf("bad exit code: %d", exitCode)
+		}
+
+		expected := `Usage: app [--version] [--help] <command> [<args>]
+
+Available commands are:
+    bar    hi!
+    foo    hi!
+
+`
+		if buf.String() != expected {
+			t.Fatalf("bad: %#v\n\n'%#v'\n\n'%#v'", args, buf.String(), expected)
+		}
+	}
+}
+
 func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
 	testCases := [][]string{
 		{"--help", "foo"},
