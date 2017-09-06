@@ -161,7 +161,7 @@ func TestCLIRun_prefix(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	if exitCode != 1 {
+	if exitCode != 127 {
 		t.Fatalf("bad: %d", exitCode)
 	}
 
@@ -346,10 +346,13 @@ func TestCLIRun_printHelp(t *testing.T) {
 }
 
 func TestCLIRun_printHelpIllegal(t *testing.T) {
-	testCases := [][]string{
-		{},
-		{"i-dont-exist"},
-		{"-bad-flag", "foo"},
+	testCases := []struct {
+		args []string
+		exit int
+	}{
+		{nil, 127},
+		{[]string{"i-dont-exist"}, 127},
+		{[]string{"-bad-flag", "foo"}, 1},
 	}
 
 	for _, testCase := range testCases {
@@ -357,7 +360,7 @@ func TestCLIRun_printHelpIllegal(t *testing.T) {
 		helpText := "foo"
 
 		cli := &CLI{
-			Args: testCase,
+			Args: testCase.args,
 			Commands: map[string]CommandFactory{
 				"foo": func() (Command, error) {
 					return &MockCommand{HelpText: helpText}, nil
@@ -389,7 +392,7 @@ func TestCLIRun_printHelpIllegal(t *testing.T) {
 			continue
 		}
 
-		if code != 1 {
+		if code != testCase.exit {
 			t.Errorf("Args: %#v. Code: %d", testCase, code)
 			continue
 		}
