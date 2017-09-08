@@ -67,6 +67,12 @@ type CLI struct {
 	// deferred to function calls within the interface implementation.
 	Commands map[string]CommandFactory
 
+	// HiddenCommands is a list of commands that are "hidden". Hidden
+	// commands are not given to the help function callback and do not
+	// show up in autocomplete. The values in the slice should be equivalent
+	// to the keys in the command map.
+	HiddenCommands []string
+
 	// Name defines the name of the CLI.
 	Name string
 
@@ -122,6 +128,7 @@ type CLI struct {
 	autocomplete   *complete.Complete
 	commandTree    *radix.Tree
 	commandNested  bool
+	commandHidden  map[string]struct{}
 	subcommand     string
 	subcommandArgs []string
 	topFlags       []string
@@ -304,6 +311,14 @@ func (c *CLI) init() {
 		c.HelpWriter = os.Stderr
 	}
 
+	// Build our hidden commands
+	if len(c.HiddenCommands) > 0 {
+		c.commandHidden = make(map[string]struct{})
+		for _, h := range c.HiddenCommands {
+			c.commandHidden[h] = struct{}{}
+		}
+	}
+
 	// Build our command tree
 	c.commandTree = radix.New()
 	c.commandNested = false
@@ -425,6 +440,11 @@ func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 			return false
 		}
 
+		// If the command is hidden, don't record it at all
+		if _, ok := c.commandHidden[fullKey]; ok {
+			return false
+		}
+
 		if cmd.Sub == nil {
 			cmd.Sub = complete.Commands(make(map[string]complete.Command))
 		}
@@ -437,11 +457,6 @@ func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 		impl, err := raw.(CommandFactory)()
 		if err != nil {
 			impl = nil
-		}
-
-		// If the command is hidden, don't record it at all
-		if c, ok := impl.(CommandHidden); ok && c.Hidden() {
-			return false
 		}
 
 		// Check if it implements ComandAutocomplete. If so, setup the autocomplete
@@ -577,24 +592,12 @@ func (c *CLI) helpCommands(prefix string) map[string]CommandFactory {
 			panic("not found: " + k)
 		}
 
-		f := raw.(CommandFactory)
-
-		// Instantiate it so see if it is a hidden command. This forces
-		// us to instantiate every command on help, but help should be
-		// sufficiently rare in addition to the factory functions generally
-		// being pure allocations.
-		cmd, err := f()
-		if err != nil {
-			// If we have an error we can't really return it from this function.
-			// This is exceptionally rare since command factories usually just
-			// allocate a struct, so we'll ignore it.
-			continue
-		}
-		if ch, ok := cmd.(CommandHidden); ok && ch.Hidden() {
+		// If this is a hidden command, don't show it
+		if _, ok := c.commandHidden[k]; ok {
 			continue
 		}
 
-		result[k] = f
+		result[k] = raw.(CommandFactory)
 	}
 
 	return result

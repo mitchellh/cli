@@ -680,13 +680,14 @@ func TestCLIRun_helpHiddenRoot(t *testing.T) {
 	helpCalled := false
 	buf := new(bytes.Buffer)
 	cli := &CLI{
-		Args: []string{"--help"},
+		Args:           []string{"--help"},
+		HiddenCommands: []string{"bar"},
 		Commands: map[string]CommandFactory{
 			"foo": func() (Command, error) {
 				return &MockCommand{}, nil
 			},
 			"bar": func() (Command, error) {
-				return &MockCommandHidden{HiddenValue: true}, nil
+				return &MockCommand{}, nil
 			},
 		},
 		HelpFunc: func(m map[string]CommandFactory) string {
@@ -734,16 +735,17 @@ func TestCLIRun_helpHiddenNested(t *testing.T) {
 				return &MockCommand{SynopsisText: "hi!"}, nil
 			},
 			"foo zip": func() (Command, error) {
-				return &MockCommandHidden{HiddenValue: true}, nil
+				return &MockCommand{SynopsisText: "hi!"}, nil
 			},
 			"foo longer": func() (Command, error) {
 				return &MockCommand{SynopsisText: "hi!"}, nil
 			},
 			"foo longer longest": func() (Command, error) {
-				return &MockCommandHidden{HiddenValue: true}, nil
+				return &MockCommand{SynopsisText: "hi!"}, nil
 			},
 		},
-		HelpWriter: buf,
+		HiddenCommands: []string{"foo zip", "foo longer longest"},
+		HelpWriter:     buf,
 	}
 
 	exitCode, err := cli.Run()
@@ -1003,13 +1005,12 @@ func TestCLIAutocomplete_root(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.Last, func(t *testing.T) {
 			command := new(MockCommand)
-			commandHidden := &MockCommandHidden{HiddenValue: true}
 			cli := &CLI{
 				Commands: map[string]CommandFactory{
 					"foo":           func() (Command, error) { return command, nil },
 					"nodes":         func() (Command, error) { return command, nil },
 					"noodles":       func() (Command, error) { return command, nil },
-					"hidden":        func() (Command, error) { return commandHidden, nil },
+					"hidden":        func() (Command, error) { return command, nil },
 					"sub one":       func() (Command, error) { return command, nil },
 					"sub two":       func() (Command, error) { return command, nil },
 					"sub sub2 one":  func() (Command, error) { return command, nil },
@@ -1017,6 +1018,7 @@ func TestCLIAutocomplete_root(t *testing.T) {
 					"deep deep2 a1": func() (Command, error) { return command, nil },
 					"deep deep2 b2": func() (Command, error) { return command, nil },
 				},
+				HiddenCommands: []string{"hidden"},
 
 				Autocomplete: true,
 			}
