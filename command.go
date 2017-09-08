@@ -61,6 +61,14 @@ type CommandHelpTemplate interface {
 	HelpTemplate() string
 }
 
+// CommandHidden is an extension of Command that allows a command to
+// declare whether or not it is "hidden." A hidden command is not
+// present in the help callback or command autocompletion.
+type CommandHidden interface {
+	// Hidden should return true if hidden, and false if not hidden.
+	Hidden() bool
+}
+
 // CommandFactory is a type of function that is a factory for commands.
 // We need a factory because we may need to setup some state on the
 // struct that implements the command itself.

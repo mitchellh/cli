@@ -61,3 +61,14 @@ type MockCommandHelpTemplate struct {
 func (c *MockCommandHelpTemplate) HelpTemplate() string {
 	return c.HelpTemplateText
 }
+
+// MockCommandHidden is an implementation of CommandHidden.
+type MockCommandHidden struct {
+	MockCommand
+
+	HiddenValue bool
+}
+
+func (c *MockCommandHidden) Hidden() bool {
+	return c.HiddenValue
+}

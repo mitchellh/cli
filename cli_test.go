@@ -676,6 +676,90 @@ func TestCLIRun_printCommandHelpTemplate(t *testing.T) {
 	}
 }
 
+func TestCLIRun_helpHiddenRoot(t *testing.T) {
+	helpCalled := false
+	buf := new(bytes.Buffer)
+	cli := &CLI{
+		Args: []string{"--help"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return &MockCommand{}, nil
+			},
+			"bar": func() (Command, error) {
+				return &MockCommandHidden{HiddenValue: true}, nil
+			},
+		},
+		HelpFunc: func(m map[string]CommandFactory) string {
+			helpCalled = true
+
+			if _, ok := m["foo"]; !ok {
+				t.Fatal("should have foo")
+			}
+			if _, ok := m["bar"]; ok {
+				t.Fatal("should not have bar")
+			}
+
+			return ""
+		},
+		HelpWriter: buf,
+	}
+
+	code, err := cli.Run()
+	if err != nil {
+		t.Fatalf("Error: %s", err)
+	}
+
+	if code != 0 {
+		t.Fatalf("Code: %d", code)
+	}
+
+	if !helpCalled {
+		t.Fatal("help not called")
+	}
+}
+
+func TestCLIRun_helpHiddenNested(t *testing.T) {
+	command := &MockCommand{
+		HelpText: "donuts",
+	}
+
+	buf := new(bytes.Buffer)
+	cli := &CLI{
+		Args: []string{"foo", "--help"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+			"foo bar": func() (Command, error) {
+				return &MockCommand{SynopsisText: "hi!"}, nil
+			},
+			"foo zip": func() (Command, error) {
+				return &MockCommandHidden{HiddenValue: true}, nil
+			},
+			"foo longer": func() (Command, error) {
+				return &MockCommand{SynopsisText: "hi!"}, nil
+			},
+			"foo longer longest": func() (Command, error) {
+				return &MockCommandHidden{HiddenValue: true}, nil
+			},
+		},
+		HelpWriter: buf,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 0 {
+		t.Fatalf("bad exit code: %d", exitCode)
+	}
+
+	if buf.String() != testCommandHelpSubcommandsHiddenOutput {
+		t.Fatalf("bad: '%#v'\n\n'%#v'", buf.String(), testCommandHelpSubcommandsOutput)
+	}
+}
+
 func TestCLIRun_autocompleteBoth(t *testing.T) {
 	command := new(MockCommand)
 	cli := &CLI{
@@ -906,6 +990,7 @@ func TestCLIAutocomplete_root(t *testing.T) {
 		{nil, "n", []string{"nodes", "noodles"}},
 		{nil, "noo", []string{"noodles"}},
 		{nil, "su", []string{"sub"}},
+		{nil, "h", nil},
 
 		// Make sure global flags work on subcommands
 		{[]string{"sub"}, "-v", nil},
@@ -918,11 +1003,13 @@ func TestCLIAutocomplete_root(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.Last, func(t *testing.T) {
 			command := new(MockCommand)
+			commandHidden := &MockCommandHidden{HiddenValue: true}
 			cli := &CLI{
 				Commands: map[string]CommandFactory{
 					"foo":           func() (Command, error) { return command, nil },
 					"nodes":         func() (Command, error) { return command, nil },
 					"noodles":       func() (Command, error) { return command, nil },
+					"hidden":        func() (Command, error) { return commandHidden, nil },
 					"sub one":       func() (Command, error) { return command, nil },
 					"sub two":       func() (Command, error) { return command, nil },
 					"sub sub2 one":  func() (Command, error) { return command, nil },
@@ -1190,6 +1277,13 @@ Subcommands:
     longer    hi!
     zap       hi!
     zip       hi!
+`
+
+const testCommandHelpSubcommandsHiddenOutput = `donuts
+
+Subcommands:
+    bar       hi!
+    longer    hi!
 `
 
 const testCommandHelpSubcommandsTwoLevelOutput = `donuts

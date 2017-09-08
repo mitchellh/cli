@@ -59,6 +59,12 @@ type CLI struct {
 	// For example, if the key is "foo bar", then to access it our CLI
 	// must be accessed with "./cli foo bar". See the docs for CLI for
 	// notes on how this changes some other behavior of the CLI as well.
+	//
+	// The factory should be as cheap as possible, ideally only allocating
+	// a struct. The factory may be called multiple times in the course
+	// of a command execution and certain events such as help require the
+	// instantiation of all commands. Expensive initialization should be
+	// deferred to function calls within the interface implementation.
 	Commands map[string]CommandFactory
 
 	// Name defines the name of the CLI.
@@ -433,6 +439,11 @@ func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 			impl = nil
 		}
 
+		// If the command is hidden, don't record it at all
+		if c, ok := impl.(CommandHidden); ok && c.Hidden() {
+			return false
+		}
+
 		// Check if it implements ComandAutocomplete. If so, setup the autocomplete
 		if c, ok := impl.(CommandAutocomplete); ok {
 			subCmd.Args = c.AutocompleteArgs()
@@ -566,7 +577,24 @@ func (c *CLI) helpCommands(prefix string) map[string]CommandFactory {
 			panic("not found: " + k)
 		}
 
-		result[k] = raw.(CommandFactory)
+		f := raw.(CommandFactory)
+
+		// Instantiate it so see if it is a hidden command. This forces
+		// us to instantiate every command on help, but help should be
+		// sufficiently rare in addition to the factory functions generally
+		// being pure allocations.
+		cmd, err := f()
+		if err != nil {
+			// If we have an error we can't really return it from this function.
+			// This is exceptionally rare since command factories usually just
+			// allocate a struct, so we'll ignore it.
+			continue
+		}
+		if ch, ok := cmd.(CommandHidden); ok && ch.Hidden() {
+			continue
+		}
+
+		result[k] = f
 	}
 
 	return result
