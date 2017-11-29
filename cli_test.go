@@ -306,6 +306,94 @@ func TestCLIRun_nestedMissingParent(t *testing.T) {
 	}
 }
 
+func TestCLIRun_nestedNoArgs(t *testing.T) {
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"foo", "bar"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return new(MockCommand), nil
+			},
+			"foo bar": func() (Command, error) {
+				return command, nil
+			},
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != command.RunResult {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if !command.RunCalled {
+		t.Fatalf("run should be called")
+	}
+
+	if !reflect.DeepEqual(command.RunArgs, []string{}) {
+		t.Fatalf("bad args: %#v", command.RunArgs)
+	}
+}
+
+func TestCLIRun_nestedQuotedCommand(t *testing.T) {
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"foo bar"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return new(MockCommand), nil
+			},
+			"foo bar": func() (Command, error) {
+				return command, nil
+			},
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 127 {
+		t.Fatalf("bad: %d", exitCode)
+	}
+}
+
+func TestCLIRun_nestedQuotedArg(t *testing.T) {
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"foo", "bar baz"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+			"foo bar": func() (Command, error) {
+				return new(MockCommand), nil
+			},
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != command.RunResult {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if !command.RunCalled {
+		t.Fatalf("run should be called")
+	}
+
+	if !reflect.DeepEqual(command.RunArgs, []string{"bar baz"}) {
+		t.Fatalf("bad args: %#v", command.RunArgs)
+	}
+}
+
 func TestCLIRun_printHelp(t *testing.T) {
 	testCases := [][]string{
 		{"-h"},
