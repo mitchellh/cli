@@ -657,7 +657,7 @@ func (c *CLI) processArgs() {
 				// We look at all arguments until one has a space. This
 				// disallows commands like: ./cli foo "bar baz". An argument
 				// with a space is always an argument.
-				j := len(c.Args) - 1
+				j := 0
 				for k, v := range c.Args[i:] {
 					if strings.ContainsRune(v, ' ') {
 						break
