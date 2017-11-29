@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"sort"
@@ -1023,24 +1024,55 @@ func TestCLIAutocomplete_root(t *testing.T) {
 				Autocomplete: true,
 			}
 
-			// Initialize
-			cli.init()
+			// Setup the autocomplete line
+			var input bytes.Buffer
+			input.WriteString("cli ")
+			if len(tc.Completed) > 0 {
+				input.WriteString(strings.Join(tc.Completed, " "))
+				input.WriteString(" ")
+			}
+			input.WriteString(tc.Last)
+			defer testAutocomplete(t, input.String())()
 
-			// Build All value
-			var all []string
-			all = append(all, tc.Completed...)
-			all = append(all, tc.Last)
+			// Setup the output so that we can read it. We don't need to
+			// reset os.Stdout because testAutocomplete will do that for us.
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+			defer r.Close() // Only defer reader since writer is closed below
+			os.Stdout = w
 
-			// Test the autocompleter
-			actual := cli.autocomplete.Command.Predict(complete.Args{
-				All:       all,
-				Completed: tc.Completed,
-				Last:      tc.Last,
-			})
+			// Run
+			exitCode, err := cli.Run()
+			w.Close()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			if exitCode != 0 {
+				t.Fatalf("bad: %d", exitCode)
+			}
+
+			// Copy the output and get the autocompletions. We trim the last
+			// element if we have one since we usually output a final newline
+			// which results in a blank.
+			var outBuf bytes.Buffer
+			io.Copy(&outBuf, r)
+			actual := strings.Split(outBuf.String(), "\n")
+			if len(actual) > 0 {
+				actual = actual[:len(actual)-1]
+			}
+			if len(actual) == 0 {
+				// If we have no elements left, make the value nil since
+				// this is what we use in tests.
+				actual = nil
+			}
+
 			sort.Strings(actual)
-
+			sort.Strings(tc.Expected)
 			if !reflect.DeepEqual(actual, tc.Expected) {
-				t.Fatalf("bad prediction: %#v", actual)
+				t.Fatalf("bad:\n\n%#v\n\n%#v", actual, tc.Expected)
 			}
 		})
 	}
@@ -1070,18 +1102,55 @@ func TestCLIAutocomplete_rootGlobalFlags(t *testing.T) {
 				},
 			}
 
-			// Initialize
-			cli.init()
+			// Setup the autocomplete line
+			var input bytes.Buffer
+			input.WriteString("cli ")
+			if len(tc.Completed) > 0 {
+				input.WriteString(strings.Join(tc.Completed, " "))
+				input.WriteString(" ")
+			}
+			input.WriteString(tc.Last)
+			defer testAutocomplete(t, input.String())()
 
-			// Test the autocompleter
-			actual := cli.autocomplete.Command.Predict(complete.Args{
-				Completed: tc.Completed,
-				Last:      tc.Last,
-			})
+			// Setup the output so that we can read it. We don't need to
+			// reset os.Stdout because testAutocomplete will do that for us.
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+			defer r.Close() // Only defer reader since writer is closed below
+			os.Stdout = w
+
+			// Run
+			exitCode, err := cli.Run()
+			w.Close()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			if exitCode != 0 {
+				t.Fatalf("bad: %d", exitCode)
+			}
+
+			// Copy the output and get the autocompletions. We trim the last
+			// element if we have one since we usually output a final newline
+			// which results in a blank.
+			var outBuf bytes.Buffer
+			io.Copy(&outBuf, r)
+			actual := strings.Split(outBuf.String(), "\n")
+			if len(actual) > 0 {
+				actual = actual[:len(actual)-1]
+			}
+			if len(actual) == 0 {
+				// If we have no elements left, make the value nil since
+				// this is what we use in tests.
+				actual = nil
+			}
+
 			sort.Strings(actual)
-
+			sort.Strings(tc.Expected)
 			if !reflect.DeepEqual(actual, tc.Expected) {
-				t.Fatalf("bad prediction: %#v", actual)
+				t.Fatalf("bad:\n\n%#v\n\n%#v", actual, tc.Expected)
 			}
 		})
 	}
@@ -1113,19 +1182,55 @@ func TestCLIAutocomplete_rootDisableDefaultFlags(t *testing.T) {
 					"-tubes": complete.PredictNothing,
 				},
 			}
+			// Setup the autocomplete line
+			var input bytes.Buffer
+			input.WriteString("cli ")
+			if len(tc.Completed) > 0 {
+				input.WriteString(strings.Join(tc.Completed, " "))
+				input.WriteString(" ")
+			}
+			input.WriteString(tc.Last)
+			defer testAutocomplete(t, input.String())()
 
-			// Initialize
-			cli.init()
+			// Setup the output so that we can read it. We don't need to
+			// reset os.Stdout because testAutocomplete will do that for us.
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+			defer r.Close() // Only defer reader since writer is closed below
+			os.Stdout = w
 
-			// Test the autocompleter
-			actual := cli.autocomplete.Command.Predict(complete.Args{
-				Completed: tc.Completed,
-				Last:      tc.Last,
-			})
+			// Run
+			exitCode, err := cli.Run()
+			w.Close()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			if exitCode != 0 {
+				t.Fatalf("bad: %d", exitCode)
+			}
+
+			// Copy the output and get the autocompletions. We trim the last
+			// element if we have one since we usually output a final newline
+			// which results in a blank.
+			var outBuf bytes.Buffer
+			io.Copy(&outBuf, r)
+			actual := strings.Split(outBuf.String(), "\n")
+			if len(actual) > 0 {
+				actual = actual[:len(actual)-1]
+			}
+			if len(actual) == 0 {
+				// If we have no elements left, make the value nil since
+				// this is what we use in tests.
+				actual = nil
+			}
+
 			sort.Strings(actual)
-
+			sort.Strings(tc.Expected)
 			if !reflect.DeepEqual(actual, tc.Expected) {
-				t.Fatalf("bad prediction: %#v", actual)
+				t.Fatalf("bad:\n\n%#v\n\n%#v", actual, tc.Expected)
 			}
 		})
 	}
