@@ -21,6 +21,8 @@ var (
 	UiColorCyan            = UiColor{36, false}
 )
 
+var _ Ui = &ColoredUi{}
+
 // ColoredUi is a Ui implementation that colors its output according
 // to the given color schemes for the given type of output.
 type ColoredUi struct {
@@ -43,16 +45,32 @@ func (u *ColoredUi) Output(message string) {
 	u.Ui.Output(u.colorize(message, u.OutputColor))
 }
 
+func (u *ColoredUi) Outputf(format string, a ...interface{}) {
+	u.Output(fmt.Sprintf(format, a...))
+}
+
 func (u *ColoredUi) Info(message string) {
 	u.Ui.Info(u.colorize(message, u.InfoColor))
+}
+
+func (u *ColoredUi) Infof(format string, a ...interface{}) {
+	u.Info(fmt.Sprintf(format, a...))
 }
 
 func (u *ColoredUi) Error(message string) {
 	u.Ui.Error(u.colorize(message, u.ErrorColor))
 }
 
+func (u *ColoredUi) Errorf(format string, a ...interface{}) {
+	u.Error(fmt.Sprintf(format, a...))
+}
+
 func (u *ColoredUi) Warn(message string) {
 	u.Ui.Warn(u.colorize(message, u.WarnColor))
+}
+
+func (u *ColoredUi) Warnf(format string, a ...interface{}) {
+	u.Warn(fmt.Sprintf(format, a...))
 }
 
 func (u *ColoredUi) colorize(message string, color UiColor) string {

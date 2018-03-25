@@ -53,9 +53,13 @@ func (u *MockUi) Error(message string) {
 	fmt.Fprint(u.ErrorWriter, "\n")
 }
 
+func (u *MockUi) Errorf(format string, a ...interface{}) {}
+
 func (u *MockUi) Info(message string) {
 	u.Output(message)
 }
+
+func (u *MockUi) Infof(format string, a ...interface{}) {}
 
 func (u *MockUi) Output(message string) {
 	u.once.Do(u.init)
@@ -64,12 +68,16 @@ func (u *MockUi) Output(message string) {
 	fmt.Fprint(u.OutputWriter, "\n")
 }
 
+func (u *MockUi) Outputf(format string, a ...interface{}) {}
+
 func (u *MockUi) Warn(message string) {
 	u.once.Do(u.init)
 
 	fmt.Fprint(u.ErrorWriter, message)
 	fmt.Fprint(u.ErrorWriter, "\n")
 }
+
+func (u *MockUi) Warnf(format string, a ...interface{}) {}
 
 func (u *MockUi) init() {
 	u.ErrorWriter = new(syncBuffer)
