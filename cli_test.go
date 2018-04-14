@@ -205,6 +205,32 @@ func TestCLIRun_default(t *testing.T) {
 	}
 }
 
+// GH-74: When using NewCLI with a default command only, Run would
+// stack overflow and crash.
+func TestCLIRun_defaultFromNew(t *testing.T) {
+	commandBar := new(MockCommand)
+
+	cli := NewCLI("test", "0.1.0")
+	cli.Commands = map[string]CommandFactory{
+		"": func() (Command, error) {
+			return commandBar, nil
+		},
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != commandBar.RunResult {
+		t.Fatalf("bad: %d", exitCode)
+	}
+
+	if !commandBar.RunCalled {
+		t.Fatalf("run should be called")
+	}
+}
+
 func TestCLIRun_helpNested(t *testing.T) {
 	helpCalled := false
 	buf := new(bytes.Buffer)
