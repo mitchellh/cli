@@ -615,7 +615,7 @@ func (c *CLI) processArgs() {
 		}
 
 		// Check for help flags.
-		if arg == "-h" || arg == "-help" || arg == "--help" {
+		if arg == "-?" || arg == "-h" || arg == "-help" || arg == "--help" {
 			c.isHelp = true
 			continue
 		}
