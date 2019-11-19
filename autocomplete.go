@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/posener/complete/cmd/install"
+	"github.com/posener/complete/v2/install"
 )
 
 // autocompleteInstaller is an interface to be implemented to perform the

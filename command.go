@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/posener/complete"
+	"github.com/posener/complete/v2"
 )
 
 const (
@@ -43,7 +43,7 @@ type CommandAutocomplete interface {
 	// AutocompleteFlags returns a mapping of supported flags and autocomplete
 	// options for this command. The map key for the Flags map should be the
 	// complete flag such as "-foo" or "--foo".
-	AutocompleteFlags() complete.Flags
+	AutocompleteFlags() map[string]complete.Predictor
 }
 
 // CommandHelpTemplate is an extension of Command that also has a function

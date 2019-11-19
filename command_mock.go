@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/posener/complete"
+	"github.com/posener/complete/v2"
 )
 
 // MockCommand is an implementation of Command that can be used for tests.
@@ -39,14 +39,14 @@ type MockCommandAutocomplete struct {
 
 	// Settable
 	AutocompleteArgsValue  complete.Predictor
-	AutocompleteFlagsValue complete.Flags
+	AutocompleteFlagsValue map[string]complete.Predictor
 }
 
 func (c *MockCommandAutocomplete) AutocompleteArgs() complete.Predictor {
 	return c.AutocompleteArgsValue
 }
 
-func (c *MockCommandAutocomplete) AutocompleteFlags() complete.Flags {
+func (c *MockCommandAutocomplete) AutocompleteFlags() map[string]complete.Predictor {
 	return c.AutocompleteFlagsValue
 }
 
