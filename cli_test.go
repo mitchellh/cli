@@ -7,16 +7,22 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/posener/complete"
+	"github.com/posener/complete/v2"
+	"github.com/posener/complete/v2/predict"
 )
 
-// envComplete is the env var that the complete library sets to specify
-// it should be calculating an auto-completion. This isn't exported so we
-// reproduce it here. If it changes then we'll have to update this.
-const envComplete = "COMP_LINE"
+// envComplete and envPoint are the env vars that the complete library sets
+// to specify it should be calculating an auto-completion. This isn't
+// exported so we reproduce it here. If it changes then we'll have to update
+// this.
+const (
+	envComplete = "COMP_LINE"
+	envPoint    = "COMP_POINT"
+)
 
 func TestCLIIsHelp(t *testing.T) {
 	testCases := []struct {
@@ -1244,7 +1250,7 @@ func TestCLIAutocomplete_rootGlobalFlags(t *testing.T) {
 
 				Autocomplete: true,
 				AutocompleteGlobalFlags: map[string]complete.Predictor{
-					"-tubes": complete.PredictNothing,
+					"-tubes": predict.Nothing,
 				},
 			}
 
@@ -1325,7 +1331,7 @@ func TestCLIAutocomplete_rootDisableDefaultFlags(t *testing.T) {
 				Autocomplete:               true,
 				AutocompleteNoDefaultFlags: true,
 				AutocompleteGlobalFlags: map[string]complete.Predictor{
-					"-tubes": complete.PredictNothing,
+					"-tubes": predict.Nothing,
 				},
 			}
 			// Setup the autocomplete line
@@ -1384,20 +1390,19 @@ func TestCLIAutocomplete_rootDisableDefaultFlags(t *testing.T) {
 
 func TestCLIAutocomplete_subcommandArgs(t *testing.T) {
 	cases := []struct {
-		Completed []string
-		Last      string
-		Expected  []string
+		Command  string
+		Expected []string
 	}{
-		{[]string{"foo"}, "RE", []string{"README.md"}},
-		{[]string{"foo", "-go"}, "asdf", []string{"yo"}},
+		{"foo RE", []string{"README.md"}},
+		{"foo -go asdf", []string{"yo"}},
 	}
 
 	for _, tc := range cases {
-		t.Run(tc.Last, func(t *testing.T) {
+		t.Run(tc.Command, func(t *testing.T) {
 			command := new(MockCommandAutocomplete)
-			command.AutocompleteArgsValue = complete.PredictFiles("*")
+			command.AutocompleteArgsValue = predict.Files("*")
 			command.AutocompleteFlagsValue = map[string]complete.Predictor{
-				"-go": complete.PredictFunc(func(complete.Args) []string {
+				"-go": complete.PredictFunc(func(string) []string {
 					return []string{"yo"}
 				}),
 			}
@@ -1416,16 +1421,7 @@ func TestCLIAutocomplete_subcommandArgs(t *testing.T) {
 			cli.init()
 
 			// Test the autocompleter
-			actual := cli.autocomplete.Command.Predict(complete.Args{
-				Completed:     tc.Completed,
-				Last:          tc.Last,
-				LastCompleted: tc.Completed[len(tc.Completed)-1],
-			})
-			sort.Strings(actual)
-
-			if !reflect.DeepEqual(actual, tc.Expected) {
-				t.Fatalf("bad prediction: %#v", actual)
-			}
+			complete.Test(t, &cli.autocomplete, tc.Command, tc.Expected)
 		})
 	}
 }
@@ -1489,6 +1485,7 @@ func TestCLISubcommand_nested(t *testing.T) {
 func testAutocomplete(t *testing.T, input string) func() {
 	// This env var is used to trigger autocomplete
 	os.Setenv(envComplete, input)
+	os.Setenv(envPoint, strconv.Itoa(len(input)))
 
 	// Change stdout/stderr since the autocompleter writes directly to them.
 	oldStdout := os.Stdout
@@ -1505,6 +1502,7 @@ func testAutocomplete(t *testing.T, input string) func() {
 	return func() {
 		// Reset our env
 		os.Unsetenv(envComplete)
+		os.Unsetenv(envPoint)
 
 		// Reset stdout, stderr
 		os.Stdout = oldStdout

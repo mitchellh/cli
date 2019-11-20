@@ -11,7 +11,8 @@ import (
 	"text/template"
 
 	"github.com/armon/go-radix"
-	"github.com/posener/complete"
+	"github.com/posener/complete/v2"
+	"github.com/posener/complete/v2/predict"
 )
 
 // CLI contains the state necessary to run subcommands and parse the
@@ -106,7 +107,7 @@ type CLI struct {
 	AutocompleteInstall        string
 	AutocompleteUninstall      string
 	AutocompleteNoDefaultFlags bool
-	AutocompleteGlobalFlags    complete.Flags
+	AutocompleteGlobalFlags    map[string]complete.Predictor
 	autocompleteInstaller      autocompleteInstaller // For tests
 
 	// HelpFunc and HelpWriter are used to output help information, if
@@ -125,7 +126,7 @@ type CLI struct {
 	// Internal fields set automatically
 
 	once           sync.Once
-	autocomplete   *complete.Complete
+	autocomplete   complete.Command
 	commandTree    *radix.Tree
 	commandNested  bool
 	commandHidden  map[string]struct{}
@@ -173,9 +174,10 @@ func (c *CLI) Run() (int, error) {
 	// If this is a autocompletion request, satisfy it. This must be called
 	// first before anything else since its possible to be autocompleting
 	// -help or -version or other flags and we want to show completions
-	// and not actually write the help or version.
-	if c.Autocomplete && c.autocomplete.Complete() {
-		return 0, nil
+	// and not actually write the help or version. In case of completion
+	// flow, this function will perform os.Exit.
+	if c.Autocomplete {
+		complete.Complete(c.Name, &c.autocomplete)
 	}
 
 	// Just show the version and exit if instructed.
@@ -402,15 +404,15 @@ func (c *CLI) initAutocomplete() {
 	// they don't show up on every command.
 	if !c.AutocompleteNoDefaultFlags {
 		cmd.Flags = map[string]complete.Predictor{
-			"-" + c.AutocompleteInstall:   complete.PredictNothing,
-			"-" + c.AutocompleteUninstall: complete.PredictNothing,
-			"-help":    complete.PredictNothing,
-			"-version": complete.PredictNothing,
+			"-" + c.AutocompleteInstall:   predict.Nothing,
+			"-" + c.AutocompleteUninstall: predict.Nothing,
+			"-help":                       predict.Nothing,
+			"-version":                    predict.Nothing,
 		}
 	}
-	cmd.GlobalFlags = c.AutocompleteGlobalFlags
+	cmd.Flags = c.AutocompleteGlobalFlags
 
-	c.autocomplete = complete.New(c.Name, cmd)
+	c.autocomplete = cmd
 }
 
 // initAutocompleteSub creates the complete.Command for a subcommand with
@@ -451,7 +453,7 @@ func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 		}
 
 		if cmd.Sub == nil {
-			cmd.Sub = complete.Commands(make(map[string]complete.Command))
+			cmd.Sub = make(map[string]*complete.Command)
 		}
 		subCmd := c.initAutocompleteSub(fullKey)
 
@@ -470,7 +472,7 @@ func (c *CLI) initAutocompleteSub(prefix string) complete.Command {
 			subCmd.Flags = c.AutocompleteFlags()
 		}
 
-		cmd.Sub[k] = subCmd
+		cmd.Sub[k] = &subCmd
 		return false
 	}
 
