@@ -154,7 +154,7 @@ func TestCLIRun_prefix(t *testing.T) {
 				return command, nil
 			},
 		},
-		HelpWriter: buf,
+		ErrorWriter: buf,
 	}
 
 	exitCode, err := cli.Run()
@@ -257,7 +257,7 @@ func TestCLIRun_helpNested(t *testing.T) {
 
 			return ""
 		},
-		HelpWriter: buf,
+		ErrorWriter: buf,
 	}
 
 	code, err := cli.Run()
@@ -347,7 +347,7 @@ func TestCLIRun_nestedMissingParent(t *testing.T) {
 				return &MockCommand{SynopsisText: "hi!"}, nil
 			},
 		},
-		HelpWriter: buf,
+		ErrorWriter: buf,
 	}
 
 	exitCode, err := cli.Run()
@@ -530,7 +530,7 @@ func TestCLIRun_printHelpIllegal(t *testing.T) {
 
 				return helpText
 			},
-			HelpWriter: buf,
+			ErrorWriter: buf,
 		}
 
 		code, err := cli.Run()
@@ -849,7 +849,7 @@ func TestCLIRun_helpHiddenRoot(t *testing.T) {
 
 			return ""
 		},
-		HelpWriter: buf,
+		ErrorWriter: buf,
 	}
 
 	code, err := cli.Run()
@@ -1097,7 +1097,7 @@ func TestCLIRun_autocompleteHelpTab(t *testing.T) {
 		},
 
 		Name:                  "foo",
-		HelpWriter:            buf,
+		ErrorWriter:           buf,
 		Autocomplete:          true,
 		autocompleteInstaller: installer,
 	}
