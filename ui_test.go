@@ -11,29 +11,42 @@ func TestBasicUi_implements(t *testing.T) {
 }
 
 func TestBasicUi_Ask(t *testing.T) {
-	in_r, in_w := io.Pipe()
-	defer in_r.Close()
-	defer in_w.Close()
-
-	writer := new(bytes.Buffer)
-	ui := &BasicUi{
-		Reader: in_r,
-		Writer: writer,
+	tests := []struct {
+		name                          string
+		query, input                  string
+		expectedQuery, expectedResult string
+	}{
+		{"EmptyString", "Middle Name?", "\n", "Middle Name? ", ""},
+		{"NonEmptyString", "Name?", "foo bar\nbaz\n", "Name? ", "foo bar"},
 	}
 
-	go in_w.Write([]byte("foo bar\nbaz\n"))
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			in_r, in_w := io.Pipe()
+			defer in_r.Close()
+			defer in_w.Close()
 
-	result, err := ui.Ask("Name?")
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
+			writer := new(bytes.Buffer)
+			ui := &BasicUi{
+				Reader: in_r,
+				Writer: writer,
+			}
 
-	if writer.String() != "Name? " {
-		t.Fatalf("bad: %#v", writer.String())
-	}
+			go in_w.Write([]byte(tc.input))
 
-	if result != "foo bar" {
-		t.Fatalf("bad: %#v", result)
+			result, err := ui.Ask(tc.query)
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			if writer.String() != tc.expectedQuery {
+				t.Fatalf("bad: %#v", writer.String())
+			}
+
+			if result != tc.expectedResult {
+				t.Fatalf("bad: %#v", result)
+			}
+		})
 	}
 }
 
