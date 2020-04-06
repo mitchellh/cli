@@ -1412,6 +1412,10 @@ func TestCLIAutocomplete_subcommandArgs(t *testing.T) {
 				Autocomplete: true,
 			}
 
+			// We need to initialize the autocomplete environment so that
+			// the cli doesn't no-op the autocomplete init
+			defer testAutocomplete(t, "must be non-empty")()
+
 			// Initialize
 			cli.init()
 
