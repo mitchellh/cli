@@ -60,6 +60,10 @@ func (u *BasicUi) AskSecret(query string) (string, error) {
 }
 
 func (u *BasicUi) ask(query string, secret bool) (string, error) {
+	if u.Reader == nil {
+		return "", errors.New("no reader")
+	}
+
 	if _, err := fmt.Fprint(u.Writer, query+" "); err != nil {
 		return "", err
 	}
