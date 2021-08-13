@@ -1,4 +1,4 @@
-TEST?=./...
+TEST? = ./...
 
 default: test
 
@@ -13,5 +13,3 @@ testrace:
 # updatedeps installs all the dependencies to run and build
 updatedeps:
 	go mod download
-
-.PHONY: test testrace updatedeps
