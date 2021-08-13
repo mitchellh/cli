@@ -1,6 +1,7 @@
-# Go CLI Library [![GoDoc](https://godoc.org/github.com/mitchellh/cli?status.png)](https://godoc.org/github.com/mitchellh/cli)
+# Go CLI Library
 > A Go library for implementing powerful command-line interfaces
 
+[![GoDoc](https://godoc.org/github.com/mitchellh/cli?status.png)](https://pkg.go.dev/github.com/mitchellh/cli)
 [![GitHub tag](https://img.shields.io/github/tag/mitchellh/cli?include_prereleases=&sort=semver)](https://github.com/mitchellh/cli/releases/)
 [![License](https://img.shields.io/badge/License-Mozilla_Public_License_2.0-blue)](#license)
 
