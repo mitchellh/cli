@@ -128,6 +128,13 @@ type CLI struct {
 	// ErrorWriter to os.Stderr.
 	ErrorWriter io.Writer
 
+	// InvalidCommandFunc will be called if a command that is invalid
+	// is executed. It accepts the name of the command and the args that
+	// were passed. It returns a boolean to indicate
+	// if the function handled the command. If the function returns false
+	// then the regular behavior for a missing command is followed.
+	InvalidCommandFunc func(command string, args []string) (bool, error)
+
 	//---------------------------------------------------------------
 	// Internal fields set automatically
 
@@ -235,6 +242,16 @@ func (c *CLI) Run() (int, error) {
 	// implementation. If the command is invalid or blank, it is an error.
 	raw, ok := c.commandTree.Get(c.Subcommand())
 	if !ok {
+		if c.InvalidCommandFunc != nil {
+			handled, err := c.InvalidCommandFunc(c.Subcommand(), c.Args)
+			if err != nil {
+				c.ErrorWriter.Write([]byte(fmt.Sprintf("Error: %s", err)))
+				return 1, nil
+			}
+			if handled {
+				return 0, nil
+			}
+		}
 		c.ErrorWriter.Write([]byte(c.HelpFunc(c.helpCommands(c.subcommandParent())) + "\n"))
 		return 127, nil
 	}
