@@ -171,9 +171,6 @@ func TestCLIRun_prefix(t *testing.T) {
 	}
 }
 
-// NOTE: This failing test is intended to demonstrate incorrect behaviour
-// in which a subcommand with an arbitrary suffix is still parsed as that
-// subcommand, if a supplied argument is also suffixed by that subcommand.
 func TestCLIRun_subcommandSuffix(t *testing.T) {
 	buf := new(bytes.Buffer)
 	command := new(MockCommand)
