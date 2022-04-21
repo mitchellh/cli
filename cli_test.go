@@ -171,6 +171,37 @@ func TestCLIRun_prefix(t *testing.T) {
 	}
 }
 
+func TestCLIRun_subcommandSuffix(t *testing.T) {
+	buf := new(bytes.Buffer)
+	command := new(MockCommand)
+	cli := &CLI{
+		Args: []string{"fooasdf", "-o=foo"},
+		Commands: map[string]CommandFactory{
+			"foo": func() (Command, error) {
+				return command, nil
+			},
+
+			"foo bar": func() (Command, error) {
+				return command, nil
+			},
+		},
+		ErrorWriter: buf,
+	}
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if exitCode != 127 {
+		t.Fatalf("expected to get exit code 127, but got %d", exitCode)
+	}
+
+	if command.RunCalled {
+		t.Fatalf("run should not be called")
+	}
+}
+
 func TestCLIRun_default(t *testing.T) {
 	commandBar := new(MockCommand)
 	commandBar.RunResult = 42

@@ -680,12 +680,12 @@ func (c *CLI) processArgs() {
 				}
 
 				// Determine the argument we look to to end subcommands.
-				// We look at all arguments until one has a space. This
-				// disallows commands like: ./cli foo "bar baz". An argument
-				// with a space is always an argument.
+				// We look at all arguments until one is a flag or has a space.
+				// This disallows commands like: ./cli foo "bar baz". An
+				// argument with a space is always an argument.
 				j := 0
 				for k, v := range c.Args[i:] {
-					if strings.ContainsRune(v, ' ') {
+					if strings.ContainsRune(v, ' ') || v[0] == '-' {
 						break
 					}
 
