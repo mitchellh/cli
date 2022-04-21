@@ -11,7 +11,7 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig/v3"
 	"github.com/armon/go-radix"
 	"github.com/posener/complete"
 )
