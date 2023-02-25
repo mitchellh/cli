@@ -14,5 +14,5 @@ require (
 	github.com/mattn/go-isatty v0.0.3
 	github.com/posener/complete v1.1.1
 	github.com/stretchr/testify v1.6.1 // indirect
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 )
