@@ -1,8 +1,8 @@
-# Go CLI Library [![GoDoc](https://godoc.org/github.com/mitchellh/cli?status.png)](https://pkg.go.dev/github.com/mitchellh/cli)
+# Go CLI Library [![GoDoc](https://godoc.org/github.com/hashicorp/cli?status.png)](https://pkg.go.dev/github.com/hashicorp/cli)
 
 cli is a library for implementing command-line interfaces in Go.
 cli is the library that powers the CLI for
-[Packer](https://github.com/mitchellh/packer),
+[Packer](https://github.com/hashicorp/packer),
 [Consul](https://github.com/hashicorp/consul),
 [Vault](https://github.com/hashicorp/vault),
 [Terraform](https://github.com/hashicorp/terraform),
@@ -44,7 +44,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mitchellh/cli"
+	"github.com/hashicorp/cli"
 )
 
 func main() {
