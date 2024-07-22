@@ -1,3 +1,9 @@
+<center>
+<strong>🚨 This project is archived. 🚨</strong> <a href="https://gist.github.com/mitchellh/90029601268e59a29e64e55bab1c5bdc">Learn More</a>
+</center>
+
+<hr> 
+
 # Go CLI Library [![GoDoc](https://godoc.org/github.com/mitchellh/cli?status.png)](https://pkg.go.dev/github.com/mitchellh/cli)
 
 cli is a library for implementing command-line interfaces in Go.
